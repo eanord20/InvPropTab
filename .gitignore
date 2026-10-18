@@ -1,0 +1,25 @@
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.log
+*.pdb
+*.cache
+*.vsidx
+*.dtbcache*
+
+# Local user data
+suppliers.json
+projects.json
+designers.json
+descriptions.json
+categories.json
+fields.json
+
+# Autodesk assemblies must come from a local Inventor installation
+Autodesk.Inventor.Interop.dll
+Autodesk.Inventor.Interop.xml
+
+# Local worktrees
+.worktrees/

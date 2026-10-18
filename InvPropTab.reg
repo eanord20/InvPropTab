@@ -1,0 +1,131 @@
+REGEDIT4
+
+[HKEY_CLASSES_ROOT\InvPropTab.PropBrowser]
+@="Inv_Property_Tab.UI.PropUI.PropBrowserActiveX"
+
+[HKEY_CLASSES_ROOT\InvPropTab.PropBrowser\CLSID]
+@="{A9F9E447-5A11-4A0C-9B8E-5A6C8B2F2D34}"
+
+[HKEY_CLASSES_ROOT\CLSID\{A9F9E447-5A11-4A0C-9B8E-5A6C8B2F2D34}]
+@="Inv_Property_Tab.UI.PropUI.PropBrowserActiveX"
+
+[HKEY_CLASSES_ROOT\CLSID\{A9F9E447-5A11-4A0C-9B8E-5A6C8B2F2D34}\InprocServer32]
+@="mscoree.dll"
+"ThreadingModel"="Both"
+"Class"="Inv_Property_Tab.UI.PropUI.PropBrowserActiveX"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{A9F9E447-5A11-4A0C-9B8E-5A6C8B2F2D34}\InprocServer32\1.0.2.0]
+"Class"="Inv_Property_Tab.UI.PropUI.PropBrowserActiveX"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{A9F9E447-5A11-4A0C-9B8E-5A6C8B2F2D34}\ProgId]
+@="InvPropTab.PropBrowser"
+
+[HKEY_CLASSES_ROOT\CLSID\{A9F9E447-5A11-4A0C-9B8E-5A6C8B2F2D34}\Implemented Categories\{62C8FE65-4EBB-45E7-B440-6E39B2CDBF29}]
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.UI.PropUI.PropBrowserControl]
+@="Inv_Property_Tab.UI.PropUI.PropBrowserControl"
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.UI.PropUI.PropBrowserControl\CLSID]
+@="{6CAEC476-755F-354F-9F8C-CDD381B6F474}"
+
+[HKEY_CLASSES_ROOT\CLSID\{6CAEC476-755F-354F-9F8C-CDD381B6F474}]
+@="Inv_Property_Tab.UI.PropUI.PropBrowserControl"
+
+[HKEY_CLASSES_ROOT\CLSID\{6CAEC476-755F-354F-9F8C-CDD381B6F474}\InprocServer32]
+@="mscoree.dll"
+"ThreadingModel"="Both"
+"Class"="Inv_Property_Tab.UI.PropUI.PropBrowserControl"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{6CAEC476-755F-354F-9F8C-CDD381B6F474}\InprocServer32\1.0.2.0]
+"Class"="Inv_Property_Tab.UI.PropUI.PropBrowserControl"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{6CAEC476-755F-354F-9F8C-CDD381B6F474}\ProgId]
+@="Inv_Property_Tab.UI.PropUI.PropBrowserControl"
+
+[HKEY_CLASSES_ROOT\CLSID\{6CAEC476-755F-354F-9F8C-CDD381B6F474}\Implemented Categories\{62C8FE65-4EBB-45E7-B440-6E39B2CDBF29}]
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.AddIn.AddInServer]
+@="Inv_Property_Tab.AddIn.AddInServer"
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.AddIn.AddInServer\CLSID]
+@="{A199A936-8AAA-4DDC-8BED-A41DB48D894C}"
+
+[HKEY_CLASSES_ROOT\CLSID\{A199A936-8AAA-4DDC-8BED-A41DB48D894C}]
+@="Inv_Property_Tab.AddIn.AddInServer"
+
+[HKEY_CLASSES_ROOT\CLSID\{A199A936-8AAA-4DDC-8BED-A41DB48D894C}\InprocServer32]
+@="mscoree.dll"
+"ThreadingModel"="Both"
+"Class"="Inv_Property_Tab.AddIn.AddInServer"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{A199A936-8AAA-4DDC-8BED-A41DB48D894C}\InprocServer32\1.0.2.0]
+"Class"="Inv_Property_Tab.AddIn.AddInServer"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{A199A936-8AAA-4DDC-8BED-A41DB48D894C}\ProgId]
+@="Inv_Property_Tab.AddIn.AddInServer"
+
+[HKEY_CLASSES_ROOT\CLSID\{A199A936-8AAA-4DDC-8BED-A41DB48D894C}\Implemented Categories\{62C8FE65-4EBB-45E7-B440-6E39B2CDBF29}]
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.Services.IPropertiesService]
+@="Inv_Property_Tab.Services.IPropertiesService"
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.Services.IPropertiesService\CLSID]
+@="{318AA154-17CF-3EF7-88FC-58DF0F594024}"
+
+[HKEY_CLASSES_ROOT\CLSID\{318AA154-17CF-3EF7-88FC-58DF0F594024}]
+@="Inv_Property_Tab.Services.IPropertiesService"
+
+[HKEY_CLASSES_ROOT\CLSID\{318AA154-17CF-3EF7-88FC-58DF0F594024}\InprocServer32]
+@="mscoree.dll"
+"ThreadingModel"="Both"
+"Class"="Inv_Property_Tab.Services.IPropertiesService"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{318AA154-17CF-3EF7-88FC-58DF0F594024}\InprocServer32\1.0.2.0]
+"Class"="Inv_Property_Tab.Services.IPropertiesService"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{318AA154-17CF-3EF7-88FC-58DF0F594024}\ProgId]
+@="Inv_Property_Tab.Services.IPropertiesService"
+
+[HKEY_CLASSES_ROOT\CLSID\{318AA154-17CF-3EF7-88FC-58DF0F594024}\Implemented Categories\{62C8FE65-4EBB-45E7-B440-6E39B2CDBF29}]
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.Services.SupplierStore]
+@="Inv_Property_Tab.Services.SupplierStore"
+
+[HKEY_CLASSES_ROOT\Inv_Property_Tab.Services.SupplierStore\CLSID]
+@="{BD9DC718-E1B1-3D56-BA84-1F8547AA04CE}"
+
+[HKEY_CLASSES_ROOT\CLSID\{BD9DC718-E1B1-3D56-BA84-1F8547AA04CE}]
+@="Inv_Property_Tab.Services.SupplierStore"
+
+[HKEY_CLASSES_ROOT\CLSID\{BD9DC718-E1B1-3D56-BA84-1F8547AA04CE}\InprocServer32]
+@="mscoree.dll"
+"ThreadingModel"="Both"
+"Class"="Inv_Property_Tab.Services.SupplierStore"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{BD9DC718-E1B1-3D56-BA84-1F8547AA04CE}\InprocServer32\1.0.2.0]
+"Class"="Inv_Property_Tab.Services.SupplierStore"
+"Assembly"="Inv_Property_Tab, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null"
+"RuntimeVersion"="v4.0.30319"
+
+[HKEY_CLASSES_ROOT\CLSID\{BD9DC718-E1B1-3D56-BA84-1F8547AA04CE}\ProgId]
+@="Inv_Property_Tab.Services.SupplierStore"
+
+[HKEY_CLASSES_ROOT\CLSID\{BD9DC718-E1B1-3D56-BA84-1F8547AA04CE}\Implemented Categories\{62C8FE65-4EBB-45E7-B440-6E39B2CDBF29}]

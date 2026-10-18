@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Addin Type="Standard">
+  <ClassId>{A199A936-8AAA-4DDC-8BED-A41DB48D894C}</ClassId>
+  <ClientId>{A199A936-8AAA-4DDC-8BED-A41DB48D894C}</ClientId>
+  <DisplayName>InvPropTab</DisplayName>
+  <Description>Custom Model Browser tab for viewing/editing iProperties</Description>
+  <Assembly>Inv_Property_Tab.dll</Assembly>
+  <FullClassName>Inv_Property_Tab.AddIn.AddInServer</FullClassName>
+  <LoadOnStartUp>1</LoadOnStartUp>
+  <UserUnloadable>1</UserUnloadable>
+</Addin>

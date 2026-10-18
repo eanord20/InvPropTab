@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="Inventor" Name="Inv_Property_Tab" AppVersion="1.0.2" ProductType="Application" SupportedLocales="en-US">
+  <CompanyDetails Name="Inv_Property_Tab" />
+  <Components>
+    <RuntimeRequirements OS="Win64" Platform="Inventor" SeriesMin="24.0" SeriesMax="30.0" />
+    <ComponentEntry AppName="Inv_Property_Tab" Version="1.0.2" ModuleName="./Contents/Inventor2020/Inv_Property_Tab.dll" AppDescription="Export Sheet Metal flat patterns to DXF from Assembly" LoadOnCommandInvocation="False" LoadOnAutoCADStartup="False">
+      <Commands>
+        <Command LocalizedName="Inv DXF Exporter" Global="Inv_Property_Tab.ExportFlatDxfCmd" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+</ApplicationPackage>
