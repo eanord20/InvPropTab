@@ -12,23 +12,24 @@ namespace Inv_Property_Tab.UI.Settings
     public sealed class FieldsSettingsForm : Form
     {
         private readonly DataGridView _grid = new DataGridView();
-        private readonly BindingList<FieldRow> _rows;
+        private readonly BindingList<FieldRow> _rows = new BindingList<FieldRow>();
         private readonly FieldsConfigurationValidator _validator = new FieldsConfigurationValidator();
         private readonly Func<FieldsConfiguration>? _loadDefault;
+        private List<FieldDefinition> _unknownFields = new List<FieldDefinition>();
 
         public FieldsSettingsForm(FieldsConfiguration configuration, Func<FieldsConfiguration>? loadDefault = null)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
-            Configuration = configuration;
             _loadDefault = loadDefault;
-            _rows = new BindingList<FieldRow>(configuration.Fields.OrderBy(field => field.Order).Select(FieldRow.FromDefinition).ToList());
+            Configuration = configuration;
             Text = "Настройка полей";
-            Width = 1100;
-            Height = 560;
+            Width = 650;
+            Height = 620;
             StartPosition = FormStartPosition.CenterParent;
             BuildGrid();
             BuildButtons();
+            LoadRows(configuration);
         }
 
         public FieldsConfiguration Configuration { get; private set; }
@@ -42,23 +43,17 @@ namespace Inv_Property_Tab.UI.Settings
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.MultiSelect = false;
             _grid.DataSource = _rows;
-            _grid.Columns.Add(TextColumn(nameof(FieldRow.Id), "ID", 110));
-            _grid.Columns.Add(TextColumn(nameof(FieldRow.Label), "Подпись", 140));
-            _grid.Columns.Add(ComboColumn(nameof(FieldRow.Source), "Источник", new[] { FieldSources.Standard, FieldSources.Custom, FieldSources.System }, 90));
-            _grid.Columns.Add(TextColumn(nameof(FieldRow.PropertySetId), "PropertySet ID", 130));
-            _grid.Columns.Add(TextColumn(nameof(FieldRow.PropertyName), "Свойство", 120));
-            _grid.Columns.Add(ComboColumn(nameof(FieldRow.Editor), "Редактор", new[] { FieldEditors.Text, FieldEditors.Multiline, FieldEditors.List, FieldEditors.Number, FieldEditors.ReadOnly }, 90));
-            _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(FieldRow.Visible), HeaderText = "Видимое", Width = 65 });
-            _grid.Columns.Add(TextColumn(nameof(FieldRow.Values), "Значения списка", 160));
-            _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(FieldRow.RememberValues), HeaderText = "Запоминать", Width = 80 });
+            _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(FieldRow.Visible), HeaderText = "Показывать", Width = 80 });
+            _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(FieldRow.Label), HeaderText = "Свойство", ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+            _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(FieldRow.RememberValues), HeaderText = "Запоминать", Width = 90 });
+            _grid.CellBeginEdit += Grid_CellBeginEdit;
+            _grid.CellFormatting += Grid_CellFormatting;
             Controls.Add(_grid);
         }
 
         private void BuildButtons()
         {
-            var panel = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.LeftToRight, Padding = new Padding(6) };
-            panel.Controls.Add(CreateButton("Добавить", AddField));
-            panel.Controls.Add(CreateButton("Удалить", DeleteField));
+            var panel = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 76, FlowDirection = FlowDirection.LeftToRight, Padding = new Padding(6), AutoScroll = true };
             panel.Controls.Add(CreateButton("Вверх", () => MoveSelected(-1)));
             panel.Controls.Add(CreateButton("Вниз", () => MoveSelected(1)));
             panel.Controls.Add(CreateButton("Импорт", ImportConfiguration));
@@ -70,23 +65,21 @@ namespace Inv_Property_Tab.UI.Settings
             panel.BringToFront();
         }
 
-        private void AddField()
+        private void Grid_CellBeginEdit(object? sender, DataGridViewCellCancelEventArgs e)
         {
-            var id = "field" + (_rows.Count + 1);
-            _rows.Add(new FieldRow { Id = id, Label = id, Source = FieldSources.Custom, Editor = FieldEditors.Text, Visible = true });
-            _grid.CurrentCell = _grid.Rows[_rows.Count - 1].Cells[0];
+            if (_grid.Columns[e.ColumnIndex].DataPropertyName == nameof(FieldRow.RememberValues) && !_rows[e.RowIndex].CanRemember)
+                e.Cancel = true;
         }
 
-        private void DeleteField()
+        private void Grid_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
-            var index = SelectedIndex();
-            if (index >= 0)
-                _rows.RemoveAt(index);
+            if (_grid.Columns[e.ColumnIndex].DataPropertyName == nameof(FieldRow.RememberValues) && !_rows[e.RowIndex].CanRemember)
+                e.CellStyle.ForeColor = System.Drawing.SystemColors.GrayText;
         }
 
         private void MoveSelected(int offset)
         {
-            var index = SelectedIndex();
+            var index = _grid.CurrentRow?.Index ?? -1;
             var target = index + offset;
             if (index < 0 || target < 0 || target >= _rows.Count)
                 return;
@@ -110,7 +103,7 @@ namespace Inv_Property_Tab.UI.Settings
                     var errors = _validator.Validate(configuration);
                     if (errors.Count > 0)
                         throw new InvalidDataException(string.Join(System.Environment.NewLine, errors));
-                    ReplaceRows(configuration);
+                    LoadRows(configuration);
                 }
             }
         }
@@ -122,9 +115,6 @@ namespace Inv_Property_Tab.UI.Settings
                 if (dialog.ShowDialog(this) != DialogResult.OK)
                     return;
                 var configuration = BuildConfiguration();
-                var errors = _validator.Validate(configuration);
-                if (errors.Count > 0)
-                    throw new InvalidDataException(string.Join(System.Environment.NewLine, errors));
                 using (var stream = File.Create(dialog.FileName))
                     new DataContractJsonSerializer(typeof(FieldsConfiguration)).WriteObject(stream, configuration);
             }
@@ -134,14 +124,17 @@ namespace Inv_Property_Tab.UI.Settings
         {
             if (_loadDefault == null || MessageBox.Show("Восстановить заводской набор полей?", "InvPropTab", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            ReplaceRows(_loadDefault());
+            LoadRows(_loadDefault());
         }
 
-        private void ReplaceRows(FieldsConfiguration configuration)
+        private void LoadRows(FieldsConfiguration configuration)
         {
+            var merged = FieldSettingsMerger.Merge(InventorPropertyCatalog.All, configuration);
+            var catalogIds = new HashSet<string>(InventorPropertyCatalog.All.Select(field => field.Id), StringComparer.OrdinalIgnoreCase);
+            _unknownFields = merged.Fields.Where(field => !catalogIds.Contains(field.Id)).Select(FieldSettingsMerger.Clone).ToList();
             _rows.RaiseListChangedEvents = false;
             _rows.Clear();
-            foreach (var field in configuration.Fields.OrderBy(field => field.Order))
+            foreach (var field in merged.Fields.Where(field => catalogIds.Contains(field.Id)).OrderBy(field => field.Order))
                 _rows.Add(FieldRow.FromDefinition(field));
             _rows.RaiseListChangedEvents = true;
             _rows.ResetBindings();
@@ -150,30 +143,20 @@ namespace Inv_Property_Tab.UI.Settings
         private FieldsConfiguration BuildConfiguration()
         {
             _grid.EndEdit();
-            return new FieldsConfiguration
-            {
-                Version = 1,
-                Fields = _rows.Select((row, index) => row.ToDefinition((index + 1) * 10)).ToList()
-            };
+            var fields = _rows.Select((row, index) => row.ToDefinition((index + 1) * 10)).ToList();
+            fields.AddRange(_unknownFields.Select(FieldSettingsMerger.Clone));
+            var configuration = new FieldsConfiguration { Version = 1, Fields = fields };
+            var errors = _validator.Validate(configuration);
+            if (errors.Count > 0)
+                throw new InvalidDataException(string.Join(System.Environment.NewLine, errors));
+            return configuration;
         }
 
         private void SaveConfiguration()
         {
-            var configuration = BuildConfiguration();
-            var errors = _validator.Validate(configuration);
-            if (errors.Count > 0)
-            {
-                MessageBox.Show(string.Join(System.Environment.NewLine, errors), "InvPropTab", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            Configuration = configuration;
+            Configuration = BuildConfiguration();
             DialogResult = DialogResult.OK;
             Close();
-        }
-
-        private int SelectedIndex()
-        {
-            return _grid.CurrentRow?.Index ?? -1;
         }
 
         private static Button CreateButton(string text, Action action)
@@ -183,61 +166,32 @@ namespace Inv_Property_Tab.UI.Settings
             return button;
         }
 
-        private static DataGridViewTextBoxColumn TextColumn(string property, string title, int width)
-        {
-            return new DataGridViewTextBoxColumn { DataPropertyName = property, HeaderText = title, Width = width };
-        }
-
-        private static DataGridViewComboBoxColumn ComboColumn(string property, string title, IEnumerable<string> values, int width)
-        {
-            var column = new DataGridViewComboBoxColumn { DataPropertyName = property, HeaderText = title, Width = width, FlatStyle = FlatStyle.Flat };
-            column.Items.AddRange(values.Cast<object>().ToArray());
-            return column;
-        }
-
         private sealed class FieldRow
         {
-            public string Id { get; set; } = string.Empty;
-            public string Label { get; set; } = string.Empty;
-            public string Source { get; set; } = FieldSources.Standard;
-            public string PropertySetId { get; set; } = string.Empty;
-            public string PropertyName { get; set; } = string.Empty;
-            public string Editor { get; set; } = FieldEditors.Text;
+            public FieldDefinition Definition { get; set; } = new FieldDefinition();
             public bool Visible { get; set; }
-            public string Values { get; set; } = string.Empty;
+            public string Label { get; set; } = string.Empty;
             public bool RememberValues { get; set; }
+            public bool CanRemember => Definition.Editor == FieldEditors.List && !Definition.Id.Equals("description", StringComparison.OrdinalIgnoreCase);
 
             public static FieldRow FromDefinition(FieldDefinition definition)
             {
                 return new FieldRow
                 {
-                    Id = definition.Id,
-                    Label = definition.Label,
-                    Source = definition.Source,
-                    PropertySetId = definition.PropertySetId ?? string.Empty,
-                    PropertyName = definition.PropertyName ?? string.Empty,
-                    Editor = definition.Editor,
+                    Definition = FieldSettingsMerger.Clone(definition),
                     Visible = definition.Visible,
-                    Values = string.Join("; ", definition.Values ?? new List<string>()),
+                    Label = definition.Label,
                     RememberValues = definition.RememberValues
                 };
             }
 
             public FieldDefinition ToDefinition(int order)
             {
-                return new FieldDefinition
-                {
-                    Id = (Id ?? string.Empty).Trim(),
-                    Label = (Label ?? string.Empty).Trim(),
-                    Source = Source,
-                    PropertySetId = string.IsNullOrWhiteSpace(PropertySetId) ? null : PropertySetId.Trim(),
-                    PropertyName = string.IsNullOrWhiteSpace(PropertyName) ? null : PropertyName.Trim(),
-                    Editor = Editor,
-                    Visible = Visible,
-                    Order = order,
-                    Values = (Values ?? string.Empty).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(value => value.Trim()).Where(value => value.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-                    RememberValues = RememberValues
-                };
+                var result = FieldSettingsMerger.Clone(Definition);
+                result.Visible = Visible;
+                result.Order = order;
+                result.RememberValues = CanRemember && RememberValues;
+                return result;
             }
         }
     }

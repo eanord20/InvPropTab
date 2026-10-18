@@ -231,6 +231,32 @@ public sealed class InventorPropertyCatalogTests
 }
 
 [TestClass]
+public sealed class FieldSettingsMergerTests
+{
+    [TestMethod]
+    public void MergePreservesSupplierSettingsAndUnknownFields()
+    {
+        var current = new FieldsConfiguration
+        {
+            Fields =
+            {
+                new FieldDefinition { Id = "supplier", Label = "Старый поставщик", Visible = false, Order = 10, Editor = FieldEditors.List, Values = { "Bosch" }, RememberValues = true },
+                new FieldDefinition { Id = "legacy", Label = "Legacy", Visible = true, Order = 20, Editor = FieldEditors.Text, PropertyName = "Legacy" }
+            }
+        };
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Settings.FieldSettingsMerger");
+        Assert.IsNotNull(type);
+        var result = (FieldsConfiguration)type.GetMethod("Merge")!.Invoke(null, new object[] { InventorPropertyCatalog.All, current })!;
+
+        var supplier = result.Fields.Single(field => field.Id == "supplier");
+        Assert.IsFalse(supplier.Visible);
+        Assert.IsTrue(supplier.RememberValues);
+        CollectionAssert.AreEqual(new[] { "Bosch" }, supplier.Values);
+        Assert.IsTrue(result.Fields.Any(field => field.Id == "legacy"));
+    }
+}
+
+[TestClass]
 public sealed class AppLoggerTests
 {
     [TestMethod]
