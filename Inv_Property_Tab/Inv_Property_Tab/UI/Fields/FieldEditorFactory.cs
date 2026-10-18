@@ -43,7 +43,11 @@ namespace Inv_Property_Tab.UI.Fields
             control.Dock = DockStyle.Top;
             control.Margin = new Padding(0);
             control.Font = SystemFonts.MessageBoxFont;
-            return new FieldEditorBinding(definition, control);
+            var binding = new FieldEditorBinding(definition, control);
+            control.TextChanged += (_, __) => binding.RefreshDirtyState();
+            if (control is ComboBox comboBoxControl)
+                comboBoxControl.SelectionChangeCommitted += (_, __) => binding.RefreshDirtyState();
+            return binding;
         }
     }
 }

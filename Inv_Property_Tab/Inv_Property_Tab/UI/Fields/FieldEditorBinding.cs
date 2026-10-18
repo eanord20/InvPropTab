@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Inv_Property_Tab.Configuration;
@@ -7,10 +8,14 @@ namespace Inv_Property_Tab.UI.Fields
 {
     public sealed class FieldEditorBinding
     {
+        private readonly Color _originalBackColor;
+        private bool _suppressEvents;
+
         public FieldEditorBinding(FieldDefinition definition, Control control)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
             Control = control ?? throw new ArgumentNullException(nameof(control));
+            _originalBackColor = control.BackColor;
         }
 
         public FieldDefinition Definition { get; }
@@ -43,10 +48,25 @@ namespace Inv_Property_Tab.UI.Fields
             return true;
         }
 
+        public void RefreshDirtyState()
+        {
+            if (!_suppressEvents)
+                Control.BackColor = IsChanged ? FieldEditorColors.Changed : _originalBackColor;
+        }
+
         public void AcceptValue(string value)
         {
-            Value = value;
-            OriginalValue = Value;
+            _suppressEvents = true;
+            try
+            {
+                Value = value;
+                OriginalValue = Value;
+                Control.BackColor = _originalBackColor;
+            }
+            finally
+            {
+                _suppressEvents = false;
+            }
         }
     }
 }

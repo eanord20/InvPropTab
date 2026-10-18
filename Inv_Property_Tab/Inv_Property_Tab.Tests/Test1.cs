@@ -307,6 +307,15 @@ public sealed class FieldEditorFactoryTests
     }
 
     [TestMethod]
+    public void ChangedValueHighlightsAndAcceptedValueRestoresColor()
+    {
+        var result = InvokeDirtyStateOnSta();
+
+        Assert.IsTrue(result.ChangedColorDiffers);
+        Assert.IsTrue(result.AcceptedColorRestored);
+    }
+
+    [TestMethod]
     public void ConfigurablePanelExposesDocumentOperations()
     {
         var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Fields.ConfigurableFieldsPanel");
@@ -324,6 +333,42 @@ public sealed class FieldEditorFactoryTests
 
         Assert.IsNotNull(type);
         Assert.IsNotNull(type.GetProperty("Configuration"));
+    }
+
+    private static (bool ChangedColorDiffers, bool AcceptedColorRestored) InvokeDirtyStateOnSta()
+    {
+        (bool ChangedColorDiffers, bool AcceptedColorRestored) result = default;
+        Exception? failure = null;
+        var thread = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                var factoryType = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Fields.FieldEditorFactory")!;
+                var factory = Activator.CreateInstance(factoryType);
+                var definition = new FieldDefinition { Id = "project", Label = "Проект", Editor = FieldEditors.Text };
+                var binding = factoryType.GetMethod("Create")!.Invoke(factory, new object[] { definition })!;
+                var control = binding.GetType().GetProperty("Control")!.GetValue(binding)!;
+                var backColor = control.GetType().GetProperty("BackColor")!;
+                var originalColor = backColor.GetValue(control);
+                binding.GetType().GetMethod("AcceptValue")!.Invoke(binding, new object[] { "A" });
+                binding.GetType().GetProperty("Value")!.SetValue(binding, "B");
+                binding.GetType().GetMethod("RefreshDirtyState")!.Invoke(binding, null);
+                var changedColor = backColor.GetValue(control);
+                binding.GetType().GetMethod("AcceptValue")!.Invoke(binding, new object[] { "B" });
+                var acceptedColor = backColor.GetValue(control);
+                result = (!Equals(originalColor, changedColor), Equals(originalColor, acceptedColor));
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+        if (failure != null)
+            throw failure;
+        return result;
     }
 
     private static bool[] InvokeRememberOnSta(FieldDefinition definition, params string[] values)
