@@ -225,6 +225,16 @@ public sealed class FieldEditorFactoryTests
         Assert.IsNotNull(type);
         Assert.IsNotNull(type.GetMethod("LoadDocument"));
         Assert.IsNotNull(type.GetMethod("Apply"));
+        Assert.IsNotNull(type.GetMethod("SetReadOnly"));
+    }
+
+    [TestMethod]
+    public void SettingsFormExposesValidatedConfiguration()
+    {
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Settings.FieldsSettingsForm");
+
+        Assert.IsNotNull(type);
+        Assert.IsNotNull(type.GetProperty("Configuration"));
     }
 
     private static string CreateControlTypeName(FieldDefinition definition)

@@ -54,6 +54,7 @@ namespace Inv_Property_Tab.UI.PropUI
         private readonly DataGridView _gridCustom = new DataGridView();
         private readonly WinTextBox _tbDims = new WinTextBox();
 
+        private readonly Button _btnSettings = new Button();
         private readonly Button _btnApply = new Button();
 
         private readonly Dictionary<Control, string> _originalValues = new Dictionary<Control, string>();
@@ -223,6 +224,7 @@ namespace Inv_Property_Tab.UI.PropUI
             _btnDesigners.Click += (_, __) => ManageList("Разработчики", _designerStore);
             _btnProjects.Click += (_, __) => ManageList("Проекты", _projectStore);
             _btnCategories.Click += (_, __) => ManageList("Категории", _categoryStore);
+            _btnSettings.Click += (_, __) => EditFieldSettings();
             _btnApply.Click += (_, __) => ApplyChanges();
             _btnOpenLocation.Click += (_, __) => OpenLocationInExplorer();
         }
@@ -247,6 +249,19 @@ namespace Inv_Property_Tab.UI.PropUI
             }
             catch
             {
+            }
+        }
+
+        private void EditFieldSettings()
+        {
+            try
+            {
+                if (_configurableFields.EditConfiguration(this))
+                    ReloadFromDocument();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "InvPropTab", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -501,6 +516,7 @@ namespace Inv_Property_Tab.UI.PropUI
             _cbSupplier.Enabled = writable;
             _btnSuppliers.Enabled = true;
             _gridCustom.ReadOnly = true;
+            _configurableFields.SetReadOnly(isReadOnly);
 
             _btnApply.Enabled = writable;
         }
@@ -657,6 +673,11 @@ namespace Inv_Property_Tab.UI.PropUI
             AddField("Прочее", _gridCustom);
 
             AddSeparator();
+
+            _btnSettings.Text = "Настроить поля";
+            _btnSettings.Height = 30;
+            _btnSettings.AutoSize = true;
+            AddControlCentered(_btnSettings);
 
             _btnApply.Text = "Применить";
             _btnApply.Height = 32;

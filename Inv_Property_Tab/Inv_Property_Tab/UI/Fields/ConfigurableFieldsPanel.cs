@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using Inventor;
 using Inv_Property_Tab.Configuration;
 using Inv_Property_Tab.Services;
+using Inv_Property_Tab.UI.Settings;
 
 namespace Inv_Property_Tab.UI.Fields
 {
@@ -67,6 +68,29 @@ namespace Inv_Property_Tab.UI.Fields
         }
 
         public bool HasChanges => _bindings.Any(item => item.IsChanged && item.Definition.Editor != FieldEditors.ReadOnly);
+
+        public bool EditConfiguration(IWin32Window owner)
+        {
+            using (var form = new FieldsSettingsForm(_store.Load()))
+            {
+                if (form.ShowDialog(owner) != DialogResult.OK)
+                    return false;
+                _store.Save(form.Configuration);
+            }
+            Rebuild();
+            return true;
+        }
+
+        public void SetReadOnly(bool readOnly)
+        {
+            foreach (var binding in _bindings)
+            {
+                if (binding.Control is TextBoxBase textBox)
+                    textBox.ReadOnly = readOnly || binding.Definition.Editor == FieldEditors.ReadOnly;
+                else
+                    binding.Control.Enabled = !readOnly && binding.Definition.Editor != FieldEditors.ReadOnly;
+            }
+        }
 
         public IReadOnlyList<PropertyWriteResult> Apply(Document document)
         {
