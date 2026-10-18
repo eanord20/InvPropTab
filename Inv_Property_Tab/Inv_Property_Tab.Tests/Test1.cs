@@ -96,6 +96,7 @@ public sealed class FieldsConfigurationStoreTests
         Assert.IsFalse(description.RememberValues);
         Assert.IsFalse(File.Exists(Path.Combine(_directory, "fields.json")));
         Assert.IsNotNull(typeof(FieldsConfigurationStore).GetMethod("LoadDefault"));
+        Assert.IsTrue(store.LoadDefault().Fields.Any(field => field.Id == "material"));
     }
 
     [TestMethod]
@@ -197,6 +198,35 @@ public sealed class ComOwnershipTests
 
         method.Invoke(null, new object?[] { null });
         method.Invoke(null, new object[] { new object() });
+    }
+}
+
+[TestClass]
+public sealed class InventorPropertyCatalogTests
+{
+    [TestMethod]
+    public void CatalogHasUniqueIdsAndRememberedSupplier()
+    {
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.Configuration.InventorPropertyCatalog");
+        Assert.IsNotNull(type);
+        var fields = ((System.Collections.Generic.IEnumerable<FieldDefinition>)type.GetProperty("All")!.GetValue(null)!).ToList();
+
+        Assert.AreEqual(fields.Count, fields.Select(field => field.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        var supplier = fields.Single(field => field.Id == "supplier");
+        Assert.AreEqual(FieldEditors.List, supplier.Editor);
+        Assert.IsTrue(supplier.RememberValues);
+    }
+
+    [TestMethod]
+    public void CatalogNeverAllowsDescriptionHistory()
+    {
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.Configuration.InventorPropertyCatalog");
+        Assert.IsNotNull(type);
+        var fields = ((System.Collections.Generic.IEnumerable<FieldDefinition>)type.GetProperty("All")!.GetValue(null)!).ToList();
+
+        var description = fields.Single(field => field.Id == "description");
+        Assert.AreEqual(FieldEditors.Text, description.Editor);
+        Assert.IsFalse(description.RememberValues);
     }
 }
 

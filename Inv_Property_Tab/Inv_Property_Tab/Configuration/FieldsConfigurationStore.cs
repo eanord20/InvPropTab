@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Serialization.Json;
 
 namespace Inv_Property_Tab.Configuration
@@ -9,7 +8,6 @@ namespace Inv_Property_Tab.Configuration
     public sealed class FieldsConfigurationStore
     {
         private const string FileName = "fields.json";
-        private const string DefaultResourceName = "Inv_Property_Tab.Configuration.default-fields.json";
         private readonly string _directory;
         private readonly FieldsConfigurationValidator _validator = new FieldsConfigurationValidator();
 
@@ -71,12 +69,11 @@ namespace Inv_Property_Tab.Configuration
 
         public FieldsConfiguration LoadDefault()
         {
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(DefaultResourceName))
+            return NormalizeAndValidate(new FieldsConfiguration
             {
-                if (stream == null)
-                    throw new InvalidOperationException("Default fields configuration resource is missing.");
-                return NormalizeAndValidate(Deserialize(stream));
-            }
+                Version = 1,
+                Fields = InventorPropertyCatalog.All.ToList()
+            });
         }
 
         private FieldsConfiguration NormalizeAndValidate(FieldsConfiguration configuration)
