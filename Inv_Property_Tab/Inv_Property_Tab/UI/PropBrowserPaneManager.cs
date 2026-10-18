@@ -1,8 +1,8 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Inventor;
 using Inv_Property_Tab.Diagnostics;
+using Inv_Property_Tab.Interop;
 using Inv_Property_Tab.UI.PropUI;
 
 namespace Inv_Property_Tab.UI
@@ -28,35 +28,44 @@ namespace Inv_Property_Tab.UI
 
                 ReleaseActivePane();
                 BrowserPane? pane = null;
+                BrowserPanes? panes = null;
                 try
                 {
-                    // Search for existing pane by name.
-                    foreach (BrowserPane p in doc.BrowserPanes)
+                    panes = doc.BrowserPanes;
+                    for (var index = 1; index <= panes.Count; index++)
                     {
-                        if (string.Equals(p.Name, PaneDisplayName, StringComparison.OrdinalIgnoreCase))
+                        BrowserPane? candidate = null;
+                        try
                         {
-                            pane = p;
+                            candidate = panes[index];
+                            if (!string.Equals(candidate.Name, PaneDisplayName, StringComparison.OrdinalIgnoreCase))
+                                continue;
+                            pane = candidate;
+                            candidate = null;
                             break;
                         }
+                        finally
+                        {
+                            ComRelease.Final(candidate);
+                        }
                     }
+                    if (pane == null)
+                        pane = panes.Add(PaneDisplayName, "InvPropTab.PropBrowser");
                 }
-                catch
+                finally
                 {
-                }
-
-                if (pane == null)
-                {
-                    // Create a new BrowserPane hosting our COM-visible WinForms control.
-                    pane = doc.BrowserPanes.Add(PaneDisplayName, "InvPropTab.PropBrowser");
+                    ComRelease.Final(panes);
                 }
 
                 _activePane = pane;
 
                 TrySetContext(app, doc, pane);
 
+                object? control = null;
                 try
                 {
-                    if (pane.Control == null)
+                    control = pane.Control;
+                    if (control == null)
                     {
                         Log("BrowserPane.Control is null. ActiveX control was not created. Check COM registration for ProgId 'InvPropTab.PropBrowser'.");
                         ShowControlErrorOnce();
@@ -64,56 +73,65 @@ namespace Inv_Property_Tab.UI
                 }
                 catch (Exception ex)
                 {
-                    Log("Error accessing BrowserPane.Control: " + ex);
+                    Logger.Error("Access BrowserPane control", ex);
+                }
+                finally
+                {
+                    ComRelease.Final(control);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("Ensure BrowserPane", ex);
             }
         }
 
         public void RefreshActivePane()
         {
+            object? control = null;
             try
             {
                 if (_activePane == null)
                     return;
-
-                var ctrl = _activePane.Control;
-                if (ctrl == null)
+                control = _activePane.Control;
+                if (control == null)
                     return;
-
-                dynamic d = ctrl;
-                d.RefreshFromDocument();
+                dynamic dynamicControl = control;
+                dynamicControl.RefreshFromDocument();
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("Refresh BrowserPane", ex);
+            }
+            finally
+            {
+                ComRelease.Final(control);
             }
         }
 
         private void TrySetContext(Inventor.Application app, Document doc, BrowserPane pane)
         {
+            object? control = null;
             try
             {
-                if (pane == null)
-                    return;
-
-                var ctrl = pane.Control;
-                if (ctrl == null)
+                control = pane.Control;
+                if (control == null)
                 {
                     Log("TrySetContext: pane.Control is null");
                     return;
                 }
-
-                var ctx = new PropBrowserContext(app, doc);
-
-                dynamic d = ctrl;
-                d.SetContext(ctx);
+                var context = new PropBrowserContext(app, doc);
+                dynamic dynamicControl = control;
+                dynamicControl.SetContext(context);
             }
             catch (Exception ex)
             {
-                Log("TrySetContext failed: " + ex);
+                Logger.Error("Set BrowserPane context", ex);
                 ShowControlErrorOnce();
+            }
+            finally
+            {
+                ComRelease.Final(control);
             }
         }
 
@@ -156,8 +174,7 @@ namespace Inv_Property_Tab.UI
 
             try
             {
-                if (Marshal.IsComObject(_activePane))
-                    Marshal.FinalReleaseComObject(_activePane);
+                ComRelease.Final(_activePane);
             }
             finally
             {
