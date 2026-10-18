@@ -150,6 +150,16 @@ public sealed class FieldsConfigurationStoreTests
 public sealed class DescriptionEditorTests
 {
     [TestMethod]
+    public void CompactLayoutHasPhysicalAndActionRows()
+    {
+        var type = typeof(Inv_Property_Tab.UI.PropUI.PropBrowserControl);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+
+        Assert.IsNotNull(type.GetField("_physicalRow", flags));
+        Assert.IsNotNull(type.GetField("_actionsRow", flags));
+    }
+
+    [TestMethod]
     public void DescriptionUsesTextBoxWithoutHistoryStore()
     {
         var type = typeof(Inv_Property_Tab.UI.PropUI.PropBrowserControl);

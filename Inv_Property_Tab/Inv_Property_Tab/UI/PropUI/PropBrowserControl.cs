@@ -55,6 +55,8 @@ namespace Inv_Property_Tab.UI.PropUI
         private readonly DataGridView _gridCustom = new DataGridView();
         private readonly WinTextBox _tbDims = new WinTextBox();
 
+        private readonly TableLayoutPanel _physicalRow = new TableLayoutPanel();
+        private readonly TableLayoutPanel _actionsRow = new TableLayoutPanel();
         private readonly Button _btnSettings = new Button();
         private readonly Button _btnApply = new Button();
 
@@ -676,31 +678,68 @@ namespace Inv_Property_Tab.UI.PropUI
             locationPanel.Controls.Add(_btnOpenLocation);
             locationPanel.Height = _tbLocation.PreferredHeight;
             _btnOpenLocation.Height = _tbLocation.PreferredHeight;
-            AddField("Расположение", locationPanel);
-            AddField("Имя файла", _tbFileName);
+            AddUnlabeledControl(locationPanel);
+            AddUnlabeledControl(_tbFileName);
 
             AddSeparator();
 
-            AddField("Свойства", _configurableFields);
+            AddUnlabeledControl(_configurableFields);
+
+            AddSeparator();
+            BuildPhysicalRow();
+            AddUnlabeledControl(_physicalRow);
 
             AddSeparator();
 
             AddField("Прочее", _gridCustom);
 
             AddSeparator();
+            BuildActionsRow();
+            AddUnlabeledControl(_actionsRow);
+        }
 
-            _btnSettings.Text = "Настроить поля";
-            _btnSettings.Height = 30;
-            _btnSettings.AutoSize = true;
-            AddControlCentered(_btnSettings);
+        private void AddUnlabeledControl(Control control)
+        {
+            control.Dock = DockStyle.Top;
+            control.Margin = new Padding(0, 0, 0, 8);
+            _layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _layout.Controls.Add(control, 0, _layout.RowCount++);
+        }
 
+        private void BuildPhysicalRow()
+        {
+            _physicalRow.Dock = DockStyle.Top;
+            _physicalRow.AutoSize = true;
+            _physicalRow.ColumnCount = 2;
+            _physicalRow.RowCount = 2;
+            _physicalRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            _physicalRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            _physicalRow.Controls.Add(new Label { Text = "Габариты", Dock = DockStyle.Top, AutoSize = true }, 0, 0);
+            _physicalRow.Controls.Add(new Label { Text = "Масса", Dock = DockStyle.Top, AutoSize = true }, 1, 0);
+            _tbDims.Dock = DockStyle.Top;
+            _tbDims.Margin = new Padding(0, 2, 4, 0);
+            _tbMass.Dock = DockStyle.Top;
+            _tbMass.Margin = new Padding(4, 2, 0, 0);
+            _physicalRow.Controls.Add(_tbDims, 0, 1);
+            _physicalRow.Controls.Add(_tbMass, 1, 1);
+        }
+
+        private void BuildActionsRow()
+        {
+            _actionsRow.Dock = DockStyle.Top;
+            _actionsRow.AutoSize = true;
+            _actionsRow.ColumnCount = 2;
+            _actionsRow.RowCount = 1;
+            _actionsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            _actionsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            _btnSettings.Text = "Настроить";
+            _btnSettings.Height = 32;
+            _btnSettings.Dock = DockStyle.Left;
             _btnApply.Text = "Применить";
             _btnApply.Height = 32;
-            _btnApply.Anchor = AnchorStyles.Top;
-            _btnApply.Margin = new Padding(0, 6, 0, 0);
-            _btnApply.AutoSize = false;
-            _btnApply.MinimumSize = new Size(160, 32);
-            AddControlCentered(_btnApply);
+            _btnApply.Dock = DockStyle.Right;
+            _actionsRow.Controls.Add(_btnSettings, 0, 0);
+            _actionsRow.Controls.Add(_btnApply, 1, 0);
         }
 
         private void AddControlCentered(Control c)

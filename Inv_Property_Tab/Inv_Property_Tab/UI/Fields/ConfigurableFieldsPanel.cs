@@ -49,7 +49,7 @@ namespace Inv_Property_Tab.UI.Fields
                 _layout.RowCount = 0;
                 _bindings.Clear();
                 _configuration = _store.Load();
-                foreach (var definition in _configuration.Fields.Where(field => field.Visible).OrderBy(field => field.Order).ThenBy(field => field.Id, StringComparer.OrdinalIgnoreCase))
+                foreach (var definition in _configuration.Fields.Where(field => field.Visible && field.Id != "mass" && field.Id != "dimensions").OrderBy(field => field.Order).ThenBy(field => field.Id, StringComparer.OrdinalIgnoreCase))
                 {
                     var binding = _factory.Create(definition);
                     binding.EditValuesRequested += (_, __) => EditValues(binding, this);
