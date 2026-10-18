@@ -17,13 +17,8 @@
     <RegisterForComInterop>false</RegisterForComInterop>
     <UnregisterForComInterop>false</UnregisterForComInterop>
     <PlatformTarget>x64</PlatformTarget>
-    <InventorAddinDeployDir2020>$(APPDATA)\Autodesk\Inventor 2020\Addins\</InventorAddinDeployDir2020>
-    <InventorAddinDeployDir2021>$(APPDATA)\Autodesk\Inventor 2021\Addins\</InventorAddinDeployDir2021>
-    <InventorAddinDeployDir2022>$(APPDATA)\Autodesk\Inventor 2022\Addins\</InventorAddinDeployDir2022>
-    <InventorAddinDeployDir2023>$(APPDATA)\Autodesk\Inventor 2023\Addins\</InventorAddinDeployDir2023>
-    <InventorAddinDeployDir2024>$(APPDATA)\Autodesk\Inventor 2024\Addins\</InventorAddinDeployDir2024>
-    <InventorAddinDeployDir2025>$(APPDATA)\Autodesk\Inventor 2025\Addins\</InventorAddinDeployDir2025>
-    <InventorAddinDeployDir2026>$(APPDATA)\Autodesk\Inventor 2026\Addins\</InventorAddinDeployDir2026>
+    <Inventor2020PublicAssemblies Condition="'$(Inventor2020PublicAssemblies)' == ''">$(ProgramFiles)\Autodesk\Inventor 2020\Bin\Public Assemblies</Inventor2020PublicAssemblies>
+    <InventorAddinDeployDir2020 Condition="'$(InventorAddinDeployDir2020)' == ''">$(APPDATA)\Autodesk\Inventor 2020\Addins</InventorAddinDeployDir2020>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +26,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Reference Include="Autodesk.Inventor.Interop">
-      <HintPath>C:\Program Files\Autodesk\Inventor 2020\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll</HintPath>
+      <HintPath>$(Inventor2020PublicAssemblies)\Autodesk.Inventor.Interop.dll</HintPath>
       <Private>True</Private>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
@@ -46,30 +41,9 @@
     <Compile Remove="MyButton.cs" />
   </ItemGroup>
 
-  <Target Name="DeployInventorAddin" AfterTargets="Build">
+  <Target Name="DeployInventor2020Addin" DependsOnTargets="Build">
     <MakeDir Directories="$(InventorAddinDeployDir2020)" />
-    <MakeDir Directories="$(InventorAddinDeployDir2021)" />
-    <MakeDir Directories="$(InventorAddinDeployDir2022)" />
-    <MakeDir Directories="$(InventorAddinDeployDir2023)" />
-    <MakeDir Directories="$(InventorAddinDeployDir2024)" />
-    <MakeDir Directories="$(InventorAddinDeployDir2025)" />
-    <MakeDir Directories="$(InventorAddinDeployDir2026)" />
-
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2020)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2021)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2022)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2023)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2024)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2025)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(InventorAddinDeployDir2026)" ContinueOnError="true" />
-
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2020)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2021)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2022)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2023)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2024)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2025)" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2026)" ContinueOnError="true" />
+    <Copy SourceFiles="$(TargetDir)$(TargetFileName);$(TargetDir)InvPropTab.addin" DestinationFolder="$(InventorAddinDeployDir2020)" />
   </Target>
 
   <Target Name="UnregisterAssembly" Condition="'$(MSBuildRuntimeType)' != 'Full'" />
