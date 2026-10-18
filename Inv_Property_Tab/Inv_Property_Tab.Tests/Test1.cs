@@ -172,4 +172,85 @@ public sealed class ComOwnershipTests
         Assert.IsNull(cache);
         Assert.IsTrue(typeof(IDisposable).IsAssignableFrom(type));
     }
+
+    [TestMethod]
+    public void PropertyWriteResultExposesSuccessAndError()
+    {
+        var assembly = typeof(Inv_Property_Tab.Services.IPropertiesService).Assembly;
+        var resultType = assembly.GetType("Inv_Property_Tab.Services.PropertyWriteResult");
+        var accessorType = assembly.GetType("Inv_Property_Tab.Services.IPropertyAccessor");
+
+        Assert.IsNotNull(resultType);
+        Assert.IsNotNull(accessorType);
+        Assert.IsNotNull(resultType.GetProperty("Success"));
+        Assert.IsNotNull(resultType.GetProperty("Error"));
+    }
+}
+
+[TestClass]
+public sealed class FieldEditorFactoryTests
+{
+    [TestMethod]
+    public void TextFieldCreatesTextBox()
+    {
+        var typeName = CreateControlTypeName(new FieldDefinition
+        {
+            Id = "description",
+            Label = "Наименование",
+            Editor = FieldEditors.Text
+        });
+
+        Assert.AreEqual("System.Windows.Forms.TextBox", typeName);
+    }
+
+    [TestMethod]
+    public void ListFieldCreatesComboBox()
+    {
+        var typeName = CreateControlTypeName(new FieldDefinition
+        {
+            Id = "project",
+            Label = "Проект",
+            Editor = FieldEditors.List,
+            Values = { "A" }
+        });
+
+        Assert.AreEqual("System.Windows.Forms.ComboBox", typeName);
+    }
+
+    [TestMethod]
+    public void ConfigurablePanelExposesDocumentOperations()
+    {
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Fields.ConfigurableFieldsPanel");
+
+        Assert.IsNotNull(type);
+        Assert.IsNotNull(type.GetMethod("LoadDocument"));
+        Assert.IsNotNull(type.GetMethod("Apply"));
+    }
+
+    private static string CreateControlTypeName(FieldDefinition definition)
+    {
+        string? result = null;
+        Exception? failure = null;
+        var thread = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                var factoryType = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Fields.FieldEditorFactory")!;
+                var factory = Activator.CreateInstance(factoryType);
+                var binding = factoryType.GetMethod("Create")!.Invoke(factory, new object[] { definition });
+                var control = binding!.GetType().GetProperty("Control")!.GetValue(binding);
+                result = control!.GetType().FullName;
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+        if (failure != null)
+            throw failure;
+        return result!;
+    }
 }

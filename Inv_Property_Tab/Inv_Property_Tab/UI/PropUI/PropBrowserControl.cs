@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Inventor;
 using Inv_Property_Tab.Services;
+using Inv_Property_Tab.UI.Fields;
 
 using WinTextBox = System.Windows.Forms.TextBox;
 
@@ -21,6 +22,7 @@ namespace Inv_Property_Tab.UI.PropUI
         private readonly SupplierStore _designerStore = new SupplierStore("designers.json");
         private readonly SupplierStore _categoryStore = new SupplierStore("categories.json");
         private readonly IPropertiesService _propertiesService = new IPropertiesService();
+        private readonly ConfigurableFieldsPanel _configurableFields = new ConfigurableFieldsPanel();
 
         private readonly Label _lblEmpty = new Label();
 
@@ -184,6 +186,7 @@ namespace Inv_Property_Tab.UI.PropUI
                     _tbDims.Text = string.Empty;
                 }
 
+                _configurableFields.LoadDocument(doc);
                 ApplyReadOnlyState(_propertiesService.IsReadOnly(doc));
                 UpdateEmptyState();
 
@@ -269,6 +272,11 @@ namespace Inv_Property_Tab.UI.PropUI
                 changedAny |= TryApplyCombo(doc, _cbCategory, "Category", _categoryStore);
 
                 changedAny |= TryApplySupplier(doc);
+                var configurableFieldsChanged = _configurableFields.HasChanges;
+                var configurableFieldFailures = _configurableFields.Apply(doc);
+                changedAny |= configurableFieldsChanged && configurableFieldFailures.Count == 0;
+                if (configurableFieldFailures.Count > 0)
+                    MessageBox.Show(string.Join(System.Environment.NewLine, configurableFieldFailures.Select(result => result.Error)), "InvPropTab", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 if (changedAny)
                 {
@@ -642,17 +650,7 @@ namespace Inv_Property_Tab.UI.PropUI
 
             AddSeparator();
 
-            AddField("Обозначение (Part Number)", _tbPartNumber);
-            AddField("Наименование (Description)", _tbDescription);
-            AddField("Категория (Category)", categoryPanel);
-            AddField("Разработал (Designer)", designerPanel);
-            AddField("Проект (Project)", projectPanel);
-            AddField("Поставщик (Supplier)", supplierPanel);
-
-            AddSeparator();
-
-            AddInlineRow("Масса", _tbMass);
-            AddInlineRow("Габариты", _tbDims);
+            AddField("Свойства", _configurableFields);
 
             AddSeparator();
 
