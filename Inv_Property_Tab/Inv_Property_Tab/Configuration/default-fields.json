@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "fields": [
+    { "id": "partNumber", "label": "Обозначение", "source": "standard", "propertyName": "Part Number", "editor": "text", "visible": true, "order": 10, "rememberValues": false },
+    { "id": "description", "label": "Наименование", "source": "standard", "propertyName": "Description", "editor": "text", "visible": true, "order": 20, "rememberValues": false },
+    { "id": "category", "label": "Категория", "source": "standard", "propertyName": "Category", "editor": "list", "visible": true, "order": 30, "values": [], "rememberValues": true },
+    { "id": "designer", "label": "Разработал", "source": "standard", "propertyName": "Designer", "editor": "list", "visible": true, "order": 40, "values": [], "rememberValues": true },
+    { "id": "project", "label": "Проект", "source": "standard", "propertyName": "Project", "editor": "list", "visible": true, "order": 50, "values": [], "rememberValues": true },
+    { "id": "supplier", "label": "Поставщик", "source": "standard", "propertyName": "Vendor", "editor": "list", "visible": true, "order": 60, "values": [], "rememberValues": true },
+    { "id": "mass", "label": "Масса", "source": "system", "editor": "readonly", "visible": true, "order": 70, "rememberValues": false },
+    { "id": "dimensions", "label": "Габариты", "source": "system", "editor": "readonly", "visible": true, "order": 80, "rememberValues": false }
+  ]
+}
