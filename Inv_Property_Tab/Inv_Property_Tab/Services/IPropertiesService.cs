@@ -194,7 +194,7 @@ namespace Inv_Property_Tab.Services
                 {
                     foreach (Inventor.Property p in ps)
                     {
-                        var name = p?.Name ?? string.Empty;
+                        var name = p.Name ?? string.Empty;
                         if (!name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
                             continue;
 
@@ -259,7 +259,7 @@ namespace Inv_Property_Tab.Services
                 {
                     foreach (Inventor.Property p in ps)
                     {
-                        var name = p?.Name ?? string.Empty;
+                        var name = p.Name ?? string.Empty;
                         if (!name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
                             continue;
 
@@ -479,7 +479,7 @@ namespace Inv_Property_Tab.Services
 
                 foreach (Inventor.Property p in custom)
                 {
-                    var n = p?.Name ?? string.Empty;
+                    var n = p.Name ?? string.Empty;
                     if (string.IsNullOrWhiteSpace(n))
                         continue;
 

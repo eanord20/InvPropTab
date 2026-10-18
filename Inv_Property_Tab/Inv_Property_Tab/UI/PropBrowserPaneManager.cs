@@ -1,30 +1,21 @@
 using System;
-using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Windows.Forms;
 using Inventor;
-using Inv_Property_Tab.Services;
 using Inv_Property_Tab.UI.PropUI;
 
 namespace Inv_Property_Tab.UI
 {
-    public class PropBrowserPaneManager
+    public class PropBrowserPaneManager : IDisposable
     {
         private const string PaneDisplayName = "InvPropTab";
         private static bool _shownControlError;
 
-        private readonly SupplierStore _supplierStore;
-        private readonly IPropertiesService _propertiesService;
-
         private BrowserPane? _activePane;
 
-        // Keep per-document references because BrowserPanes are persisted with documents.
-        private readonly Dictionary<string, BrowserPane> _paneByDocKey = new Dictionary<string, BrowserPane>(StringComparer.OrdinalIgnoreCase);
-
-        public PropBrowserPaneManager(SupplierStore supplierStore)
+        public PropBrowserPaneManager()
         {
-            _supplierStore = supplierStore;
-            _propertiesService = new IPropertiesService();
         }
 
         public void EnsurePaneForDocument(Inventor.Application app, Document doc)
@@ -34,14 +25,7 @@ namespace Inv_Property_Tab.UI
                 if (app == null || doc == null)
                     return;
 
-                var key = GetDocKey(doc);
-                if (!string.IsNullOrWhiteSpace(key) && _paneByDocKey.TryGetValue(key, out var cached))
-                {
-                    _activePane = cached;
-                    TrySetContext(app, doc, cached);
-                    return;
-                }
-
+                ReleaseActivePane();
                 BrowserPane? pane = null;
                 try
                 {
@@ -66,9 +50,6 @@ namespace Inv_Property_Tab.UI
                 }
 
                 _activePane = pane;
-
-                if (!string.IsNullOrWhiteSpace(key))
-                    _paneByDocKey[key] = pane;
 
                 TrySetContext(app, doc, pane);
 
@@ -171,25 +152,24 @@ namespace Inv_Property_Tab.UI
             }
         }
 
-        private static string GetDocKey(Document doc)
+        public void Dispose()
         {
-            try
-            {
-                var p = doc.FullFileName;
-                if (!string.IsNullOrWhiteSpace(p))
-                    return p;
-            }
-            catch
-            {
-            }
+            ReleaseActivePane();
+        }
+
+        private void ReleaseActivePane()
+        {
+            if (_activePane == null)
+                return;
 
             try
             {
-                return doc.DisplayName;
+                if (Marshal.IsComObject(_activePane))
+                    Marshal.FinalReleaseComObject(_activePane);
             }
-            catch
+            finally
             {
-                return string.Empty;
+                _activePane = null;
             }
         }
     }

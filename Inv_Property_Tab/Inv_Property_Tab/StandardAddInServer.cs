@@ -12,17 +12,13 @@ namespace Inv_Property_Tab.AddIn
         private ApplicationEvents? _appEvents;
         private DocumentEvents? _activeDocEvents;
 
-        private Services.SupplierStore? _supplierStore;
         private UI.PropBrowserPaneManager? _paneManager;
 
         public void Activate(ApplicationAddInSite addInSiteObject, bool firstTime)
         {
             _invApp = addInSiteObject.Application;
 
-            _supplierStore = new Services.SupplierStore();
-            _supplierStore.Load();
-
-            _paneManager = new UI.PropBrowserPaneManager(_supplierStore);
+            _paneManager = new UI.PropBrowserPaneManager();
 
             _appEvents = _invApp.ApplicationEvents;
             _appEvents.OnActivateDocument += AppEvents_OnActivateDocument;
@@ -53,19 +49,16 @@ namespace Inv_Property_Tab.AddIn
             {
             }
 
+            _paneManager?.Dispose();
             _paneManager = null;
-            _supplierStore = null;
             _invApp = null;
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
 
         public void ExecuteCommand(int commandID)
         {
         }
 
-        public object Automation => null;
+        public object Automation => null!;
 
         private void AppEvents_OnActivateDocument(_Document DocumentObject, EventTimingEnum BeforeOrAfter, NameValueMap Context, out HandlingCodeEnum HandlingCode)
         {
@@ -76,8 +69,11 @@ namespace Inv_Property_Tab.AddIn
             try
             {
                 var doc = (Document)DocumentObject;
+                var app = _invApp;
+                if (app == null)
+                    return;
                 TryAttachActiveDocumentEvents(doc);
-                _paneManager?.EnsurePaneForDocument(_invApp, doc);
+                _paneManager?.EnsurePaneForDocument(app, doc);
             }
             catch
             {

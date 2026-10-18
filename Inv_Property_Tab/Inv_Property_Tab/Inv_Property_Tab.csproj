@@ -13,7 +13,7 @@
     <Version>1.0.2</Version>
     <AssemblyVersion>1.0.2.0</AssemblyVersion>
     <FileVersion>1.0.2.0</FileVersion>
-    <ComVisible>true</ComVisible>
+    <ComVisible>false</ComVisible>
     <RegisterForComInterop>false</RegisterForComInterop>
     <UnregisterForComInterop>false</UnregisterForComInterop>
     <PlatformTarget>x64</PlatformTarget>

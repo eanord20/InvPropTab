@@ -159,3 +159,17 @@ public sealed class DescriptionEditorTests
         Assert.IsNull(historyField);
     }
 }
+
+[TestClass]
+public sealed class ComOwnershipTests
+{
+    [TestMethod]
+    public void PaneManagerDoesNotRetainPerDocumentComObjects()
+    {
+        var type = typeof(Inv_Property_Tab.UI.PropBrowserPaneManager);
+        var cache = type.GetField("_paneByDocKey", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        Assert.IsNull(cache);
+        Assert.IsTrue(typeof(IDisposable).IsAssignableFrom(type));
+    }
+}

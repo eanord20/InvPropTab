@@ -21,7 +21,7 @@ namespace Inv_Property_Tab.Services
 
         public SupplierStore(string? fileName = null)
         {
-            _fileName = string.IsNullOrWhiteSpace(fileName) ? "suppliers.json" : fileName;
+            _fileName = string.IsNullOrWhiteSpace(fileName) ? "suppliers.json" : fileName!;
         }
 
         public IReadOnlyList<string> Suppliers => _suppliers;
