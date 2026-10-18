@@ -19,7 +19,6 @@ namespace Inv_Property_Tab.UI.PropUI
         private readonly SupplierStore _supplierStore = new SupplierStore("suppliers.json");
         private readonly SupplierStore _projectStore = new SupplierStore("projects.json");
         private readonly SupplierStore _designerStore = new SupplierStore("designers.json");
-        private readonly SupplierStore _descriptionStore = new SupplierStore("descriptions.json");
         private readonly SupplierStore _categoryStore = new SupplierStore("categories.json");
         private readonly IPropertiesService _propertiesService = new IPropertiesService();
 
@@ -36,8 +35,7 @@ namespace Inv_Property_Tab.UI.PropUI
 
         private readonly WinTextBox _tbPartNumber = new WinTextBox();
 
-        private readonly ComboBox _cbDescription = new ComboBox();
-        private readonly Button _btnDescriptions = new Button();
+        private readonly WinTextBox _tbDescription = new WinTextBox();
         private readonly ComboBox _cbDesigner = new ComboBox();
         private readonly Button _btnDesigners = new Button();
         private readonly ComboBox _cbProject = new ComboBox();
@@ -89,10 +87,6 @@ namespace Inv_Property_Tab.UI.PropUI
             _cbSupplier.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             _cbSupplier.AutoCompleteSource = AutoCompleteSource.ListItems;
 
-            _cbDescription.DropDownStyle = ComboBoxStyle.DropDown;
-            _cbDescription.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            _cbDescription.AutoCompleteSource = AutoCompleteSource.ListItems;
-
             _cbDesigner.DropDownStyle = ComboBoxStyle.DropDown;
             _cbDesigner.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             _cbDesigner.AutoCompleteSource = AutoCompleteSource.ListItems;
@@ -120,7 +114,6 @@ namespace Inv_Property_Tab.UI.PropUI
             _supplierStore.Load();
             _projectStore.Load();
             _designerStore.Load();
-            _descriptionStore.Load();
             _categoryStore.Load();
             UpdateEmptyState();
         }
@@ -141,8 +134,7 @@ namespace Inv_Property_Tab.UI.PropUI
                 _supplierStore.Load();
                 _projectStore.Load();
                 _designerStore.Load();
-                _descriptionStore.Load();
-                _categoryStore.Load();
+                    _categoryStore.Load();
 
                 var doc = _ctx?.Document;
                 if (doc == null)
@@ -161,12 +153,11 @@ namespace Inv_Property_Tab.UI.PropUI
                 // Project iProperties
                 _tbPartNumber.Text = _propertiesService.TryGetPropertyValue(doc, "Part Number");
 
-                LoadHistory(_descriptionStore, _cbDescription);
                 LoadHistory(_designerStore, _cbDesigner);
                 LoadHistory(_projectStore, _cbProject);
                 LoadHistory(_categoryStore, _cbCategory);
 
-                _cbDescription.Text = _propertiesService.TryGetPropertyValue(doc, "Description");
+                _tbDescription.Text = _propertiesService.TryGetPropertyValue(doc, "Description");
                 _cbDesigner.Text = _propertiesService.TryGetPropertyValue(doc, "Designer");
                 _cbProject.Text = _propertiesService.TryGetPropertyValue(doc, "Project");
                 _cbCategory.Text = _propertiesService.TryGetPropertyValue(doc, "Category");
@@ -211,8 +202,7 @@ namespace Inv_Property_Tab.UI.PropUI
         {
             _tbPartNumber.TextChanged += (_, __) => MarkDirty(_tbPartNumber);
 
-            _cbDescription.TextChanged += (_, __) => MarkDirty(_cbDescription);
-            _cbDescription.SelectionChangeCommitted += (_, __) => MarkDirty(_cbDescription);
+            _tbDescription.TextChanged += (_, __) => MarkDirty(_tbDescription);
 
             _cbDesigner.TextChanged += (_, __) => MarkDirty(_cbDesigner);
             _cbDesigner.SelectionChangeCommitted += (_, __) => MarkDirty(_cbDesigner);
@@ -227,7 +217,6 @@ namespace Inv_Property_Tab.UI.PropUI
             _cbSupplier.SelectionChangeCommitted += (_, __) => MarkDirty(_cbSupplier);
 
             _btnSuppliers.Click += (_, __) => ManageSuppliers();
-            _btnDescriptions.Click += (_, __) => ManageList("Наименования", _descriptionStore);
             _btnDesigners.Click += (_, __) => ManageList("Разработчики", _designerStore);
             _btnProjects.Click += (_, __) => ManageList("Проекты", _projectStore);
             _btnCategories.Click += (_, __) => ManageList("Категории", _categoryStore);
@@ -274,7 +263,7 @@ namespace Inv_Property_Tab.UI.PropUI
                 var changedAny = false;
 
                 changedAny |= TryApplyTextBox(doc, _tbPartNumber, "Part Number");
-                changedAny |= TryApplyCombo(doc, _cbDescription, "Description", _descriptionStore);
+                changedAny |= TryApplyTextBox(doc, _tbDescription, "Description");
                 changedAny |= TryApplyCombo(doc, _cbDesigner, "Designer", _designerStore);
                 changedAny |= TryApplyCombo(doc, _cbProject, "Project", _projectStore);
                 changedAny |= TryApplyCombo(doc, _cbCategory, "Category", _categoryStore);
@@ -496,7 +485,7 @@ namespace Inv_Property_Tab.UI.PropUI
 
             _tbPartNumber.ReadOnly = !writable;
 
-            _cbDescription.Enabled = writable;
+            _tbDescription.ReadOnly = !writable;
             _cbDesigner.Enabled = writable;
             _cbProject.Enabled = writable;
             _cbCategory.Enabled = writable;
@@ -521,7 +510,7 @@ namespace Inv_Property_Tab.UI.PropUI
             _tbSaved.Text = string.Empty;
 
             _tbPartNumber.Text = string.Empty;
-            _cbDescription.Text = string.Empty;
+            _tbDescription.Text = string.Empty;
             _cbDesigner.Text = string.Empty;
             _cbProject.Text = string.Empty;
             _cbCategory.Text = string.Empty;
@@ -615,8 +604,6 @@ namespace Inv_Property_Tab.UI.PropUI
             _btnOpenLocation.Text = "📂";
             _btnOpenLocation.Width = 32;
 
-            _btnDescriptions.Text = "...";
-            _btnDescriptions.Width = 32;
             _btnDesigners.Text = "...";
             _btnDesigners.Width = 32;
             _btnProjects.Text = "...";
@@ -632,7 +619,6 @@ namespace Inv_Property_Tab.UI.PropUI
             supplierPanel.Height = _cbSupplier.PreferredHeight;
             _btnSuppliers.Height = _cbSupplier.PreferredHeight;
 
-            var descriptionPanel = BuildComboWithButton(_cbDescription, _btnDescriptions);
             var categoryPanel = BuildComboWithButton(_cbCategory, _btnCategories);
             var designerPanel = BuildComboWithButton(_cbDesigner, _btnDesigners);
             var projectPanel = BuildComboWithButton(_cbProject, _btnProjects);
@@ -657,7 +643,7 @@ namespace Inv_Property_Tab.UI.PropUI
             AddSeparator();
 
             AddField("Обозначение (Part Number)", _tbPartNumber);
-            AddField("Наименование (Description)", descriptionPanel);
+            AddField("Наименование (Description)", _tbDescription);
             AddField("Категория (Category)", categoryPanel);
             AddField("Разработал (Designer)", designerPanel);
             AddField("Проект (Project)", projectPanel);
@@ -721,14 +707,14 @@ namespace Inv_Property_Tab.UI.PropUI
             try
             {
                 _originalValues[_tbPartNumber] = _tbPartNumber.Text ?? string.Empty;
-                _originalValues[_cbDescription] = _cbDescription.Text ?? string.Empty;
+                _originalValues[_tbDescription] = _tbDescription.Text ?? string.Empty;
                 _originalValues[_cbCategory] = _cbCategory.Text ?? string.Empty;
                 _originalValues[_cbDesigner] = _cbDesigner.Text ?? string.Empty;
                 _originalValues[_cbProject] = _cbProject.Text ?? string.Empty;
                 _originalValues[_cbSupplier] = _cbSupplier.Text ?? string.Empty;
 
                 RememberOriginalBackColor(_tbPartNumber);
-                RememberOriginalBackColor(_cbDescription);
+                RememberOriginalBackColor(_tbDescription);
                 RememberOriginalBackColor(_cbCategory);
                 RememberOriginalBackColor(_cbDesigner);
                 RememberOriginalBackColor(_cbProject);

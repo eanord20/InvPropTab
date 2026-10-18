@@ -143,3 +143,19 @@ public sealed class FieldsConfigurationStoreTests
         return (FieldsConfigurationStore)Activator.CreateInstance(typeof(FieldsConfigurationStore), _directory)!;
     }
 }
+
+[TestClass]
+public sealed class DescriptionEditorTests
+{
+    [TestMethod]
+    public void DescriptionUsesTextBoxWithoutHistoryStore()
+    {
+        var type = typeof(Inv_Property_Tab.UI.PropUI.PropBrowserControl);
+        var descriptionField = type.GetField("_tbDescription", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var historyField = type.GetField("_descriptionStore", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        Assert.IsNotNull(descriptionField);
+        Assert.AreEqual("System.Windows.Forms.TextBox", descriptionField.FieldType.FullName);
+        Assert.IsNull(historyField);
+    }
+}
