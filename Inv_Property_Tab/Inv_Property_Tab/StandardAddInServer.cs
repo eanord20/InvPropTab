@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Inventor;
+using Inv_Property_Tab.Diagnostics;
+using Inv_Property_Tab.Interop;
 
 namespace Inv_Property_Tab.AddIn
 {
@@ -8,6 +10,7 @@ namespace Inv_Property_Tab.AddIn
     [ComVisible(true)]
     public class AddInServer : ApplicationAddInServer
     {
+        private static readonly AppLogger Logger = new AppLogger();
         private Inventor.Application? _invApp;
         private ApplicationEvents? _appEvents;
         private DocumentEvents? _activeDocEvents;
@@ -34,19 +37,20 @@ namespace Inv_Property_Tab.AddIn
                 if (_activeDocEvents != null)
                 {
                     _activeDocEvents.OnSave -= ActiveDocEvents_OnSave;
-                    Marshal.FinalReleaseComObject(_activeDocEvents);
+                    ComRelease.Final(_activeDocEvents);
                     _activeDocEvents = null;
                 }
 
                 if (_appEvents != null)
                 {
                     _appEvents.OnActivateDocument -= AppEvents_OnActivateDocument;
-                    Marshal.FinalReleaseComObject(_appEvents);
+                    ComRelease.Final(_appEvents);
                     _appEvents = null;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("Deactivate add-in", ex);
             }
 
             _paneManager?.Dispose();
@@ -75,8 +79,9 @@ namespace Inv_Property_Tab.AddIn
                 TryAttachActiveDocumentEvents(doc);
                 _paneManager?.EnsurePaneForDocument(app, doc);
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("Activate document", ex);
             }
         }
 
@@ -87,7 +92,7 @@ namespace Inv_Property_Tab.AddIn
                 if (_activeDocEvents != null)
                 {
                     _activeDocEvents.OnSave -= ActiveDocEvents_OnSave;
-                    Marshal.FinalReleaseComObject(_activeDocEvents);
+                    ComRelease.Final(_activeDocEvents);
                     _activeDocEvents = null;
                 }
 
@@ -97,8 +102,9 @@ namespace Inv_Property_Tab.AddIn
                 _activeDocEvents = doc.DocumentEvents;
                 _activeDocEvents.OnSave += ActiveDocEvents_OnSave;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("Attach document events", ex);
             }
         }
 
@@ -112,8 +118,9 @@ namespace Inv_Property_Tab.AddIn
             {
                 _paneManager?.RefreshActivePane();
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("Refresh saved document", ex);
             }
         }
     }

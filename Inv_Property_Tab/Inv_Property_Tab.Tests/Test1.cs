@@ -201,6 +201,32 @@ public sealed class ComOwnershipTests
 }
 
 [TestClass]
+public sealed class AppLoggerTests
+{
+    [TestMethod]
+    public void LoggerWritesMessageWithoutExceptionDetailsFromUserData()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "InvPropTab.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var loggerType = typeof(Inv_Property_Tab.Services.IPropertiesService).Assembly.GetType("Inv_Property_Tab.Diagnostics.AppLogger");
+            Assert.IsNotNull(loggerType);
+            var logger = Activator.CreateInstance(loggerType, directory);
+            loggerType.GetMethod("Error")!.Invoke(logger, new object[] { "Read property failed", new InvalidOperationException("COM failure") });
+
+            var text = File.ReadAllText(Path.Combine(directory, "invproptab.log"));
+            StringAssert.Contains(text, "Read property failed");
+            StringAssert.Contains(text, "COM failure");
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, true);
+        }
+    }
+}
+
+[TestClass]
 public sealed class FieldEditorFactoryTests
 {
     [TestMethod]

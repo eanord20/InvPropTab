@@ -1,8 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
-using System.IO;
 using System.Windows.Forms;
 using Inventor;
+using Inv_Property_Tab.Diagnostics;
 using Inv_Property_Tab.UI.PropUI;
 
 namespace Inv_Property_Tab.UI
@@ -10,6 +10,7 @@ namespace Inv_Property_Tab.UI
     public class PropBrowserPaneManager : IDisposable
     {
         private const string PaneDisplayName = "InvPropTab";
+        private static readonly AppLogger Logger = new AppLogger();
         private static bool _shownControlError;
 
         private BrowserPane? _activePane;
@@ -140,16 +141,7 @@ namespace Inv_Property_Tab.UI
 
         private static void Log(string text)
         {
-            try
-            {
-                var dir = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "InvPropTab");
-                Directory.CreateDirectory(dir);
-                var path = System.IO.Path.Combine(dir, "invproptab.log");
-                System.IO.File.AppendAllText(path, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + text + System.Environment.NewLine);
-            }
-            catch
-            {
-            }
+            Logger.Warning(text);
         }
 
         public void Dispose()
