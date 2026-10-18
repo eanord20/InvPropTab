@@ -17,6 +17,7 @@ namespace Inv_Property_Tab.UI.Fields
         private readonly FieldEditorFactory _factory;
         private readonly TableLayoutPanel _layout = new TableLayoutPanel();
         private readonly List<FieldEditorBinding> _bindings = new List<FieldEditorBinding>();
+        private FieldsConfiguration _configuration = new FieldsConfiguration();
 
         public ConfigurableFieldsPanel()
             : this(new FieldsConfigurationStore(), new InventorPropertyAccessor(), new FieldEditorFactory())
@@ -47,8 +48,8 @@ namespace Inv_Property_Tab.UI.Fields
                 _layout.RowStyles.Clear();
                 _layout.RowCount = 0;
                 _bindings.Clear();
-                var configuration = _store.Load();
-                foreach (var definition in configuration.Fields.Where(field => field.Visible).OrderBy(field => field.Order).ThenBy(field => field.Id, StringComparer.OrdinalIgnoreCase))
+                _configuration = _store.Load();
+                foreach (var definition in _configuration.Fields.Where(field => field.Visible).OrderBy(field => field.Order).ThenBy(field => field.Id, StringComparer.OrdinalIgnoreCase))
                 {
                     var binding = _factory.Create(definition);
                     _bindings.Add(binding);
@@ -95,13 +96,30 @@ namespace Inv_Property_Tab.UI.Fields
         public IReadOnlyList<PropertyWriteResult> Apply(Document document)
         {
             var failures = new List<PropertyWriteResult>();
+            var historyChanged = false;
             foreach (var binding in _bindings.Where(item => item.IsChanged && item.Definition.Editor != FieldEditors.ReadOnly))
             {
                 var result = _accessor.Write(document, binding.Definition, binding.Value);
                 if (result.Success)
+                {
+                    historyChanged |= binding.RememberAppliedValue();
                     binding.AcceptValue(binding.Value);
+                }
                 else
+                {
                     failures.Add(result);
+                }
+            }
+            if (historyChanged)
+            {
+                try
+                {
+                    _store.Save(_configuration);
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(PropertyWriteResult.Failed("Не удалось сохранить список значений: " + ex.Message));
+                }
             }
             return failures;
         }

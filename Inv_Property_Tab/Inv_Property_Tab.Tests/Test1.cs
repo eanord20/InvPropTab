@@ -287,6 +287,26 @@ public sealed class FieldEditorFactoryTests
     }
 
     [TestMethod]
+    public void SupplierValueIsRememberedWithoutCaseDuplicates()
+    {
+        var definition = new FieldDefinition { Id = "supplier", Label = "Поставщик", Editor = FieldEditors.List, RememberValues = true };
+        var results = InvokeRememberOnSta(definition, "  Bosch  ", "bosch");
+
+        CollectionAssert.AreEqual(new[] { true, false }, results);
+        CollectionAssert.AreEqual(new[] { "Bosch" }, definition.Values);
+    }
+
+    [TestMethod]
+    public void DescriptionValueIsNeverRemembered()
+    {
+        var definition = new FieldDefinition { Id = "description", Label = "Наименование", Editor = FieldEditors.List, RememberValues = true };
+        var results = InvokeRememberOnSta(definition, "Корпус");
+
+        CollectionAssert.AreEqual(new[] { false }, results);
+        Assert.IsEmpty(definition.Values);
+    }
+
+    [TestMethod]
     public void ConfigurablePanelExposesDocumentOperations()
     {
         var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Fields.ConfigurableFieldsPanel");
@@ -304,6 +324,38 @@ public sealed class FieldEditorFactoryTests
 
         Assert.IsNotNull(type);
         Assert.IsNotNull(type.GetProperty("Configuration"));
+    }
+
+    private static bool[] InvokeRememberOnSta(FieldDefinition definition, params string[] values)
+    {
+        bool[]? results = null;
+        Exception? failure = null;
+        var thread = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                var factoryType = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Fields.FieldEditorFactory")!;
+                var factory = Activator.CreateInstance(factoryType);
+                var binding = factoryType.GetMethod("Create")!.Invoke(factory, new object[] { definition })!;
+                var valueProperty = binding.GetType().GetProperty("Value")!;
+                var rememberMethod = binding.GetType().GetMethod("RememberAppliedValue")!;
+                results = values.Select(value =>
+                {
+                    valueProperty.SetValue(binding, value);
+                    return (bool)rememberMethod.Invoke(binding, null)!;
+                }).ToArray();
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+        if (failure != null)
+            throw failure;
+        return results!;
     }
 
     private static string CreateControlTypeName(FieldDefinition definition)
