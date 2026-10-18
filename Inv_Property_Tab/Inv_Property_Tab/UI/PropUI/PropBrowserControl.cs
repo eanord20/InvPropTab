@@ -30,6 +30,7 @@ namespace Inv_Property_Tab.UI.PropUI
         private readonly TableLayoutPanel _layout = new TableLayoutPanel();
 
         private readonly WinTextBox _tbLocation = new WinTextBox();
+        private readonly WinTextBox _tbFileName = new WinTextBox();
         private readonly Button _btnOpenLocation = new Button();
         private readonly WinTextBox _tbSize = new WinTextBox();
         private readonly WinTextBox _tbCreated = new WinTextBox();
@@ -103,6 +104,7 @@ namespace Inv_Property_Tab.UI.PropUI
             _cbCategory.AutoCompleteSource = AutoCompleteSource.ListItems;
 
             _tbLocation.ReadOnly = true;
+            _tbFileName.ReadOnly = true;
             _tbSize.ReadOnly = true;
             _tbCreated.ReadOnly = true;
             _tbSaved.ReadOnly = true;
@@ -151,7 +153,9 @@ namespace Inv_Property_Tab.UI.PropUI
                 SetEnabledState(true);
 
                 // General
-                _tbLocation.Text = TryGetLocation(doc);
+                var fullFileName = TryGetFullFileName(doc);
+                _tbLocation.Text = string.IsNullOrWhiteSpace(fullFileName) ? string.Empty : System.IO.Path.GetDirectoryName(fullFileName) ?? string.Empty;
+                _tbFileName.Text = DocumentDisplayService.GetFileName(fullFileName, TryGetDisplayName(doc));
 
                 // Project iProperties
                 _tbPartNumber.Text = _propertiesService.TryGetPropertyValue(doc, "Part Number");
@@ -529,6 +533,7 @@ namespace Inv_Property_Tab.UI.PropUI
         private void ClearFields()
         {
             _tbLocation.Text = string.Empty;
+            _tbFileName.Text = string.Empty;
             _tbSize.Text = string.Empty;
             _tbCreated.Text = string.Empty;
             _tbSaved.Text = string.Empty;
@@ -559,14 +564,23 @@ namespace Inv_Property_Tab.UI.PropUI
             }
         }
 
-        private static string TryGetLocation(Document doc)
+        private static string TryGetFullFileName(Document doc)
         {
             try
             {
-                var p = doc.FullFileName;
-                if (string.IsNullOrWhiteSpace(p))
-                    return string.Empty;
-                return System.IO.Path.GetDirectoryName(p) ?? string.Empty;
+                return doc.FullFileName ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string TryGetDisplayName(Document doc)
+        {
+            try
+            {
+                return doc.DisplayName ?? string.Empty;
             }
             catch
             {
@@ -663,6 +677,7 @@ namespace Inv_Property_Tab.UI.PropUI
             locationPanel.Height = _tbLocation.PreferredHeight;
             _btnOpenLocation.Height = _tbLocation.PreferredHeight;
             AddField("Расположение", locationPanel);
+            AddField("Имя файла", _tbFileName);
 
             AddSeparator();
 

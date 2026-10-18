@@ -257,6 +257,21 @@ public sealed class FieldSettingsMergerTests
 }
 
 [TestClass]
+public sealed class DocumentDisplayServiceTests
+{
+    [TestMethod]
+    public void FileNameIncludesExtensionAndFallsBackToDisplayName()
+    {
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.Services.DocumentDisplayService");
+        Assert.IsNotNull(type);
+        var method = type.GetMethod("GetFileName")!;
+
+        Assert.AreEqual("6675.01.01.001.ipt", method.Invoke(null, new object[] { @"C:\\Parts\\6675.01.01.001.ipt", "ignored" }));
+        Assert.AreEqual("Part1", method.Invoke(null, new object[] { string.Empty, "Part1" }));
+    }
+}
+
+[TestClass]
 public sealed class AppLoggerTests
 {
     [TestMethod]
