@@ -69,7 +69,7 @@ namespace Inv_Property_Tab.Configuration
             }
         }
 
-        private FieldsConfiguration LoadDefault()
+        public FieldsConfiguration LoadDefault()
         {
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(DefaultResourceName))
             {

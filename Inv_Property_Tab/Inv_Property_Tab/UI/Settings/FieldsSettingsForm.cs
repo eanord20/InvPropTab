@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 using System.Windows.Forms;
 using Inv_Property_Tab.Configuration;
 
@@ -12,12 +14,14 @@ namespace Inv_Property_Tab.UI.Settings
         private readonly DataGridView _grid = new DataGridView();
         private readonly BindingList<FieldRow> _rows;
         private readonly FieldsConfigurationValidator _validator = new FieldsConfigurationValidator();
+        private readonly Func<FieldsConfiguration>? _loadDefault;
 
-        public FieldsSettingsForm(FieldsConfiguration configuration)
+        public FieldsSettingsForm(FieldsConfiguration configuration, Func<FieldsConfiguration>? loadDefault = null)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
             Configuration = configuration;
+            _loadDefault = loadDefault;
             _rows = new BindingList<FieldRow>(configuration.Fields.OrderBy(field => field.Order).Select(FieldRow.FromDefinition).ToList());
             Text = "Настройка полей";
             Width = 1100;
@@ -57,6 +61,9 @@ namespace Inv_Property_Tab.UI.Settings
             panel.Controls.Add(CreateButton("Удалить", DeleteField));
             panel.Controls.Add(CreateButton("Вверх", () => MoveSelected(-1)));
             panel.Controls.Add(CreateButton("Вниз", () => MoveSelected(1)));
+            panel.Controls.Add(CreateButton("Импорт", ImportConfiguration));
+            panel.Controls.Add(CreateButton("Экспорт", ExportConfiguration));
+            panel.Controls.Add(CreateButton("По умолчанию", RestoreDefaults));
             panel.Controls.Add(CreateButton("Сохранить", SaveConfiguration));
             panel.Controls.Add(CreateButton("Отмена", () => { DialogResult = DialogResult.Cancel; Close(); }));
             Controls.Add(panel);
@@ -89,14 +96,70 @@ namespace Inv_Property_Tab.UI.Settings
             _grid.CurrentCell = _grid.Rows[target].Cells[0];
         }
 
-        private void SaveConfiguration()
+        private void ImportConfiguration()
+        {
+            using (var dialog = new OpenFileDialog { Filter = "JSON (*.json)|*.json", CheckFileExists = true })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+                using (var stream = File.OpenRead(dialog.FileName))
+                {
+                    var configuration = new DataContractJsonSerializer(typeof(FieldsConfiguration)).ReadObject(stream) as FieldsConfiguration;
+                    if (configuration == null)
+                        throw new InvalidDataException("Файл конфигурации пуст.");
+                    var errors = _validator.Validate(configuration);
+                    if (errors.Count > 0)
+                        throw new InvalidDataException(string.Join(System.Environment.NewLine, errors));
+                    ReplaceRows(configuration);
+                }
+            }
+        }
+
+        private void ExportConfiguration()
+        {
+            using (var dialog = new SaveFileDialog { Filter = "JSON (*.json)|*.json", FileName = "fields.json", OverwritePrompt = true })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+                var configuration = BuildConfiguration();
+                var errors = _validator.Validate(configuration);
+                if (errors.Count > 0)
+                    throw new InvalidDataException(string.Join(System.Environment.NewLine, errors));
+                using (var stream = File.Create(dialog.FileName))
+                    new DataContractJsonSerializer(typeof(FieldsConfiguration)).WriteObject(stream, configuration);
+            }
+        }
+
+        private void RestoreDefaults()
+        {
+            if (_loadDefault == null || MessageBox.Show("Восстановить заводской набор полей?", "InvPropTab", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+            ReplaceRows(_loadDefault());
+        }
+
+        private void ReplaceRows(FieldsConfiguration configuration)
+        {
+            _rows.RaiseListChangedEvents = false;
+            _rows.Clear();
+            foreach (var field in configuration.Fields.OrderBy(field => field.Order))
+                _rows.Add(FieldRow.FromDefinition(field));
+            _rows.RaiseListChangedEvents = true;
+            _rows.ResetBindings();
+        }
+
+        private FieldsConfiguration BuildConfiguration()
         {
             _grid.EndEdit();
-            var configuration = new FieldsConfiguration
+            return new FieldsConfiguration
             {
                 Version = 1,
                 Fields = _rows.Select((row, index) => row.ToDefinition((index + 1) * 10)).ToList()
             };
+        }
+
+        private void SaveConfiguration()
+        {
+            var configuration = BuildConfiguration();
             var errors = _validator.Validate(configuration);
             if (errors.Count > 0)
             {

@@ -95,6 +95,7 @@ public sealed class FieldsConfigurationStoreTests
         Assert.AreEqual(FieldEditors.Text, description.Editor);
         Assert.IsFalse(description.RememberValues);
         Assert.IsFalse(File.Exists(Path.Combine(_directory, "fields.json")));
+        Assert.IsNotNull(typeof(FieldsConfigurationStore).GetMethod("LoadDefault"));
     }
 
     [TestMethod]
@@ -184,6 +185,18 @@ public sealed class ComOwnershipTests
         Assert.IsNotNull(accessorType);
         Assert.IsNotNull(resultType.GetProperty("Success"));
         Assert.IsNotNull(resultType.GetProperty("Error"));
+    }
+
+    [TestMethod]
+    public void ComReleaseIgnoresNullAndManagedObjects()
+    {
+        var type = typeof(Inv_Property_Tab.Services.IPropertiesService).Assembly.GetType("Inv_Property_Tab.Interop.ComRelease");
+        Assert.IsNotNull(type);
+        var method = type.GetMethod("Final");
+        Assert.IsNotNull(method);
+
+        method.Invoke(null, new object?[] { null });
+        method.Invoke(null, new object[] { new object() });
     }
 }
 

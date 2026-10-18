@@ -71,7 +71,7 @@ namespace Inv_Property_Tab.UI.Fields
 
         public bool EditConfiguration(IWin32Window owner)
         {
-            using (var form = new FieldsSettingsForm(_store.Load()))
+            using (var form = new FieldsSettingsForm(_store.Load(), _store.LoadDefault))
             {
                 if (form.ShowDialog(owner) != DialogResult.OK)
                     return false;

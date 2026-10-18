@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Inventor;
+using Inv_Property_Tab.Interop;
 
 namespace Inv_Property_Tab.Services
 {
@@ -185,25 +186,45 @@ namespace Inv_Property_Tab.Services
 
         public string TryGetPropertyValue(Document doc, string propertyName)
         {
+            PropertySets? sets = null;
             try
             {
                 if (doc == null)
                     return string.Empty;
-
-                foreach (PropertySet ps in doc.PropertySets)
+                sets = doc.PropertySets;
+                for (var setIndex = 1; setIndex <= sets.Count; setIndex++)
                 {
-                    foreach (Inventor.Property p in ps)
+                    PropertySet? set = null;
+                    try
                     {
-                        var name = p.Name ?? string.Empty;
-                        if (!name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
-                            continue;
-
-                        return p.Value?.ToString() ?? string.Empty;
+                        set = sets[setIndex];
+                        for (var propertyIndex = 1; propertyIndex <= set.Count; propertyIndex++)
+                        {
+                            Inventor.Property? property = null;
+                            try
+                            {
+                                property = set[propertyIndex];
+                                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                                    return property.Value?.ToString() ?? string.Empty;
+                            }
+                            finally
+                            {
+                                ComRelease.Final(property);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        ComRelease.Final(set);
                     }
                 }
             }
             catch
             {
+            }
+            finally
+            {
+                ComRelease.Final(sets);
             }
 
             return string.Empty;
@@ -248,28 +269,47 @@ namespace Inv_Property_Tab.Services
 
         public bool TrySetPropertyValue(Document doc, string propertyName, string value)
         {
+            PropertySets? sets = null;
             try
             {
-                if (doc == null)
+                if (doc == null || IsReadOnly(doc))
                     return false;
-                if (IsReadOnly(doc))
-                    return false;
-
-                foreach (PropertySet ps in doc.PropertySets)
+                sets = doc.PropertySets;
+                for (var setIndex = 1; setIndex <= sets.Count; setIndex++)
                 {
-                    foreach (Inventor.Property p in ps)
+                    PropertySet? set = null;
+                    try
                     {
-                        var name = p.Name ?? string.Empty;
-                        if (!name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
-                            continue;
-
-                        p.Value = value ?? string.Empty;
-                        return true;
+                        set = sets[setIndex];
+                        for (var propertyIndex = 1; propertyIndex <= set.Count; propertyIndex++)
+                        {
+                            Inventor.Property? property = null;
+                            try
+                            {
+                                property = set[propertyIndex];
+                                if (!string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                                    continue;
+                                property.Value = value ?? string.Empty;
+                                return true;
+                            }
+                            finally
+                            {
+                                ComRelease.Final(property);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        ComRelease.Final(set);
                     }
                 }
             }
             catch
             {
+            }
+            finally
+            {
+                ComRelease.Final(sets);
             }
 
             return false;
