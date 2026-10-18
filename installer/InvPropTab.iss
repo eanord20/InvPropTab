@@ -83,7 +83,7 @@ begin
     '  <ClassId>{#AddInClsidXml}</ClassId>' + #13#10 +
     '  <ClientId>{#AddInClsidXml}</ClientId>' + #13#10 +
     '  <DisplayName>{#AppName}</DisplayName>' + #13#10 +
-    '  <Description>Настраиваемая панель iProperties</Description>' + #13#10 +
+    '  <Description>Configurable iProperties browser panel</Description>' + #13#10 +
     '  <Assembly>' + XmlEscape(ExpandConstant('{app}\Inv_Property_Tab.dll')) + '</Assembly>' + #13#10 +
     '  <FullClassName>Inv_Property_Tab.AddIn.AddInServer</FullClassName>' + #13#10 +
     '  <LoadOnStartUp>1</LoadOnStartUp>' + #13#10 +
