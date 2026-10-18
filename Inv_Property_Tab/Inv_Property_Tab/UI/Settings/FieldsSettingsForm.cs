@@ -12,6 +12,7 @@ namespace Inv_Property_Tab.UI.Settings
     public sealed class FieldsSettingsForm : Form
     {
         private readonly DataGridView _grid = new DataGridView();
+        private readonly Button _valuesButton = new Button();
         private readonly BindingList<FieldRow> _rows = new BindingList<FieldRow>();
         private readonly FieldsConfigurationValidator _validator = new FieldsConfigurationValidator();
         private readonly Func<FieldsConfiguration>? _loadDefault;
@@ -48,6 +49,7 @@ namespace Inv_Property_Tab.UI.Settings
             _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(FieldRow.RememberValues), HeaderText = "Запоминать", Width = 90 });
             _grid.CellBeginEdit += Grid_CellBeginEdit;
             _grid.CellFormatting += Grid_CellFormatting;
+            _grid.SelectionChanged += (_, __) => UpdateValuesButton();
             Controls.Add(_grid);
         }
 
@@ -56,6 +58,10 @@ namespace Inv_Property_Tab.UI.Settings
             var panel = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 76, FlowDirection = FlowDirection.LeftToRight, Padding = new Padding(6), AutoScroll = true };
             panel.Controls.Add(CreateButton("Вверх", () => MoveSelected(-1)));
             panel.Controls.Add(CreateButton("Вниз", () => MoveSelected(1)));
+            _valuesButton.Text = "Значения...";
+            _valuesButton.AutoSize = true;
+            _valuesButton.Click += (_, __) => EditSelectedValues();
+            panel.Controls.Add(_valuesButton);
             panel.Controls.Add(CreateButton("Импорт", ImportConfiguration));
             panel.Controls.Add(CreateButton("Экспорт", ExportConfiguration));
             panel.Controls.Add(CreateButton("По умолчанию", RestoreDefaults));
@@ -75,6 +81,25 @@ namespace Inv_Property_Tab.UI.Settings
         {
             if (_grid.Columns[e.ColumnIndex].DataPropertyName == nameof(FieldRow.RememberValues) && !_rows[e.RowIndex].CanRemember)
                 e.CellStyle.ForeColor = System.Drawing.SystemColors.GrayText;
+        }
+
+        private void UpdateValuesButton()
+        {
+            var index = _grid.CurrentRow?.Index ?? -1;
+            _valuesButton.Enabled = index >= 0 && index < _rows.Count && _rows[index].CanRemember;
+        }
+
+        private void EditSelectedValues()
+        {
+            var index = _grid.CurrentRow?.Index ?? -1;
+            if (index < 0 || index >= _rows.Count || !_rows[index].CanRemember)
+                return;
+            var row = _rows[index];
+            using (var form = new ListValuesEditorForm(row.Label, row.Definition.Values))
+            {
+                if (form.ShowDialog(this) == DialogResult.OK)
+                    row.Definition.Values = ListValuesModel.Normalize(form.Values);
+            }
         }
 
         private void MoveSelected(int offset)
@@ -138,6 +163,7 @@ namespace Inv_Property_Tab.UI.Settings
                 _rows.Add(FieldRow.FromDefinition(field));
             _rows.RaiseListChangedEvents = true;
             _rows.ResetBindings();
+            UpdateValuesButton();
         }
 
         private FieldsConfiguration BuildConfiguration()

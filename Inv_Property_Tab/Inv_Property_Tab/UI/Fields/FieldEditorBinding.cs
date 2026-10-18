@@ -11,15 +11,19 @@ namespace Inv_Property_Tab.UI.Fields
         private readonly Color _originalBackColor;
         private bool _suppressEvents;
 
-        public FieldEditorBinding(FieldDefinition definition, Control control)
+        public FieldEditorBinding(FieldDefinition definition, Control control, Control? displayControl = null)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
             Control = control ?? throw new ArgumentNullException(nameof(control));
+            DisplayControl = displayControl ?? control;
             _originalBackColor = control.BackColor;
         }
 
+        public event EventHandler? EditValuesRequested;
+
         public FieldDefinition Definition { get; }
         public Control Control { get; }
+        public Control DisplayControl { get; }
         public string OriginalValue { get; private set; } = string.Empty;
 
         public string Value
@@ -29,6 +33,23 @@ namespace Inv_Property_Tab.UI.Fields
         }
 
         public bool IsChanged => !string.Equals(OriginalValue, Value, StringComparison.Ordinal);
+
+        public void RequestEditValues()
+        {
+            EditValuesRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void ReplaceValues(System.Collections.Generic.IEnumerable<string> values)
+        {
+            var current = Value;
+            Definition.Values = Inv_Property_Tab.UI.Settings.ListValuesModel.Normalize(values);
+            if (Control is ComboBox comboBox)
+            {
+                comboBox.Items.Clear();
+                comboBox.Items.AddRange(Definition.Values.ToArray());
+            }
+            Value = current;
+        }
 
         public bool RememberAppliedValue()
         {

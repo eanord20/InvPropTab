@@ -43,10 +43,23 @@ namespace Inv_Property_Tab.UI.Fields
             control.Dock = DockStyle.Top;
             control.Margin = new Padding(0);
             control.Font = SystemFonts.MessageBoxFont;
-            var binding = new FieldEditorBinding(definition, control);
+            Control displayControl = control;
+            Button? valuesButton = null;
+            if (control is ComboBox)
+            {
+                var host = new Panel { Dock = DockStyle.Top, Height = control.PreferredSize.Height };
+                control.Dock = DockStyle.Fill;
+                valuesButton = new Button { Text = "...", Dock = DockStyle.Right, Width = 32, Height = control.PreferredSize.Height };
+                host.Controls.Add(control);
+                host.Controls.Add(valuesButton);
+                displayControl = host;
+            }
+            var binding = new FieldEditorBinding(definition, control, displayControl);
             control.TextChanged += (_, __) => binding.RefreshDirtyState();
             if (control is ComboBox comboBoxControl)
                 comboBoxControl.SelectionChangeCommitted += (_, __) => binding.RefreshDirtyState();
+            if (valuesButton != null)
+                valuesButton.Click += (_, __) => binding.RequestEditValues();
             return binding;
         }
     }

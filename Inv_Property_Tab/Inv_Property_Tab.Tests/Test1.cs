@@ -272,6 +272,20 @@ public sealed class FieldSettingsMergerTests
 }
 
 [TestClass]
+public sealed class ListValuesModelTests
+{
+    [TestMethod]
+    public void ValuesAreTrimmedDeduplicatedAndSorted()
+    {
+        var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.UI.Settings.ListValuesModel");
+        Assert.IsNotNull(type);
+        var result = (System.Collections.Generic.List<string>)type.GetMethod("Normalize")!.Invoke(null, new object[] { new[] { " Beta ", "Alpha", "alpha", "" } })!;
+
+        CollectionAssert.AreEqual(new[] { "Alpha", "Beta" }, result);
+    }
+}
+
+[TestClass]
 public sealed class DocumentDisplayServiceTests
 {
     [TestMethod]

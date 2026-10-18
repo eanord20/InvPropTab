@@ -52,8 +52,9 @@ namespace Inv_Property_Tab.UI.Fields
                 foreach (var definition in _configuration.Fields.Where(field => field.Visible).OrderBy(field => field.Order).ThenBy(field => field.Id, StringComparer.OrdinalIgnoreCase))
                 {
                     var binding = _factory.Create(definition);
+                    binding.EditValuesRequested += (_, __) => EditValues(binding, this);
                     _bindings.Add(binding);
-                    AddField(definition.Label, binding.Control);
+                    AddField(definition.Label, binding.DisplayControl);
                 }
             }
             finally
@@ -80,6 +81,20 @@ namespace Inv_Property_Tab.UI.Fields
             }
             Rebuild();
             return true;
+        }
+
+        private bool EditValues(FieldEditorBinding binding, IWin32Window owner)
+        {
+            if (binding.Definition.Editor != FieldEditors.List)
+                return false;
+            using (var form = new ListValuesEditorForm(binding.Definition.Label, binding.Definition.Values))
+            {
+                if (form.ShowDialog(owner) != DialogResult.OK)
+                    return false;
+                binding.ReplaceValues(form.Values);
+                _store.Save(_configuration);
+                return true;
+            }
         }
 
         public void SetReadOnly(bool readOnly)
