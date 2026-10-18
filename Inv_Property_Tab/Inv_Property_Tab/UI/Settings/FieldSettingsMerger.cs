@@ -7,6 +7,11 @@ namespace Inv_Property_Tab.UI.Settings
 {
     public static class FieldSettingsMerger
     {
+        public static readonly IReadOnlyCollection<string> RemovedCatalogIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "checkingDate", "creationDate", "webLink", "subject", "itemQuantity", "baseQuantity", "componentType", "representation"
+        };
+
         public static FieldsConfiguration Merge(IReadOnlyList<FieldDefinition> catalog, FieldsConfiguration current)
         {
             if (catalog == null)
@@ -33,7 +38,7 @@ namespace Inv_Property_Tab.UI.Settings
             }
 
             var catalogIds = new HashSet<string>(catalog.Select(field => field.Id), StringComparer.OrdinalIgnoreCase);
-            result.AddRange(current.Fields.Where(field => !catalogIds.Contains(field.Id)).Select(Clone));
+            result.AddRange(current.Fields.Where(field => !catalogIds.Contains(field.Id) && !RemovedCatalogIds.Contains(field.Id)).Select(Clone));
             return new FieldsConfiguration
             {
                 Version = 1,

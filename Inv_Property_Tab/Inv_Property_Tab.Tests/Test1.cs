@@ -218,6 +218,21 @@ public sealed class InventorPropertyCatalogTests
     }
 
     [TestMethod]
+    public void RemovedPropertiesDoNotReturnFromLegacyConfiguration()
+    {
+        var removed = new[] { "checkingDate", "creationDate", "webLink", "subject", "itemQuantity", "baseQuantity", "componentType", "representation" };
+        Assert.IsFalse(InventorPropertyCatalog.All.Any(field => removed.Contains(field.Id)));
+        var legacy = new FieldsConfiguration
+        {
+            Fields = removed.Select(id => new FieldDefinition { Id = id, Label = id, Editor = FieldEditors.Text, PropertyName = id }).ToList()
+        };
+
+        var merged = Inv_Property_Tab.UI.Settings.FieldSettingsMerger.Merge(InventorPropertyCatalog.All, legacy);
+
+        Assert.IsFalse(merged.Fields.Any(field => removed.Contains(field.Id)));
+    }
+
+    [TestMethod]
     public void CatalogNeverAllowsDescriptionHistory()
     {
         var type = typeof(FieldDefinition).Assembly.GetType("Inv_Property_Tab.Configuration.InventorPropertyCatalog");
