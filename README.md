@@ -64,6 +64,14 @@ dotnet build "Inv_Property_Tab/Inv_Property_Tab.slnx" -c Release
 
 Журнал: `%APPDATA%\InvPropTab\invproptab.log`.
 
+## Документация
+
+- [Установка и устранение проблем](docs/installation.md)
+- [Настройка полей и списков](docs/configuration.md)
+- [Сборка проекта и установщика](docs/building.md)
+- [Архитектура](docs/architecture.md)
+- [История изменений](CHANGELOG.md)
+
 ## Лицензия
 
 [MIT](LICENSE), Copyright (c) 2026 Nikolay Sukhomlin.
