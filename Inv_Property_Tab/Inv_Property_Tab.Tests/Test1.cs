@@ -259,6 +259,25 @@ public sealed class InventorPropertyCatalogTests
 public sealed class FieldSettingsMergerTests
 {
     [TestMethod]
+    public void HiddenTextFieldCanToggleRememberModeWithoutLosingValues()
+    {
+        var field = InventorPropertyCatalog.All.Single(item => item.Id == "stockNumber");
+        field.Visible = false;
+        field.Values.Add("A-01");
+        var method = typeof(Inv_Property_Tab.UI.Settings.FieldSettingsMerger).GetMethod("ApplyRememberMode");
+        Assert.IsNotNull(method);
+
+        method.Invoke(null, new object[] { field, true });
+        Assert.AreEqual(FieldEditors.List, field.Editor);
+        Assert.IsTrue(field.RememberValues);
+        method.Invoke(null, new object[] { field, false });
+
+        Assert.AreEqual(FieldEditors.Text, field.Editor);
+        Assert.IsFalse(field.RememberValues);
+        CollectionAssert.AreEqual(new[] { "A-01" }, field.Values);
+    }
+
+    [TestMethod]
     public void MergePreservesSupplierSettingsAndUnknownFields()
     {
         var current = new FieldsConfiguration

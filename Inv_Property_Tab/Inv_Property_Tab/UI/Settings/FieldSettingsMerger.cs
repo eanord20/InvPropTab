@@ -46,6 +46,31 @@ namespace Inv_Property_Tab.UI.Settings
             };
         }
 
+        public static bool CanRemember(FieldDefinition field)
+        {
+            return field != null &&
+                !field.Id.Equals("description", StringComparison.OrdinalIgnoreCase) &&
+                field.Source != FieldSources.System &&
+                field.Editor != FieldEditors.ReadOnly;
+        }
+
+        public static void ApplyRememberMode(FieldDefinition field, bool enabled)
+        {
+            if (!CanRemember(field))
+            {
+                field.RememberValues = false;
+                return;
+            }
+            field.RememberValues = enabled;
+            if (enabled)
+            {
+                field.Editor = FieldEditors.List;
+                return;
+            }
+            var catalogField = InventorPropertyCatalog.Find(field.Id);
+            field.Editor = catalogField?.Editor ?? FieldEditors.Text;
+        }
+
         public static FieldDefinition Clone(FieldDefinition source)
         {
             return new FieldDefinition

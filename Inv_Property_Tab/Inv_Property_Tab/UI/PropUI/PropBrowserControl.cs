@@ -684,14 +684,9 @@ namespace Inv_Property_Tab.UI.PropUI
             AddSeparator();
 
             AddUnlabeledControl(_configurableFields);
-
-            AddSeparator();
             BuildPhysicalRow();
             AddUnlabeledControl(_physicalRow);
-
-            AddSeparator();
-
-            AddField("Прочее", _gridCustom);
+            AddUnlabeledControl(_gridCustom);
 
             AddSeparator();
             BuildActionsRow();

@@ -49,6 +49,12 @@ namespace Inv_Property_Tab.UI.Settings
             _grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(FieldRow.RememberValues), HeaderText = "Запоминать", Width = 90 });
             _grid.CellBeginEdit += Grid_CellBeginEdit;
             _grid.CellFormatting += Grid_CellFormatting;
+            _grid.CurrentCellDirtyStateChanged += (_, __) =>
+            {
+                if (_grid.IsCurrentCellDirty)
+                    _grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            };
+            _grid.CellValueChanged += (_, __) => UpdateValuesButton();
             _grid.SelectionChanged += (_, __) => UpdateValuesButton();
             Controls.Add(_grid);
         }
@@ -86,13 +92,13 @@ namespace Inv_Property_Tab.UI.Settings
         private void UpdateValuesButton()
         {
             var index = _grid.CurrentRow?.Index ?? -1;
-            _valuesButton.Enabled = index >= 0 && index < _rows.Count && _rows[index].CanRemember;
+            _valuesButton.Enabled = index >= 0 && index < _rows.Count && _rows[index].CanRemember && _rows[index].RememberValues;
         }
 
         private void EditSelectedValues()
         {
             var index = _grid.CurrentRow?.Index ?? -1;
-            if (index < 0 || index >= _rows.Count || !_rows[index].CanRemember)
+            if (index < 0 || index >= _rows.Count || !_rows[index].CanRemember || !_rows[index].RememberValues)
                 return;
             var row = _rows[index];
             using (var form = new ListValuesEditorForm(row.Label, row.Definition.Values))
@@ -198,7 +204,7 @@ namespace Inv_Property_Tab.UI.Settings
             public bool Visible { get; set; }
             public string Label { get; set; } = string.Empty;
             public bool RememberValues { get; set; }
-            public bool CanRemember => Definition.Editor == FieldEditors.List && !Definition.Id.Equals("description", StringComparison.OrdinalIgnoreCase);
+            public bool CanRemember => FieldSettingsMerger.CanRemember(Definition);
 
             public static FieldRow FromDefinition(FieldDefinition definition)
             {
@@ -216,7 +222,7 @@ namespace Inv_Property_Tab.UI.Settings
                 var result = FieldSettingsMerger.Clone(Definition);
                 result.Visible = Visible;
                 result.Order = order;
-                result.RememberValues = CanRemember && RememberValues;
+                FieldSettingsMerger.ApplyRememberMode(result, RememberValues);
                 return result;
             }
         }
