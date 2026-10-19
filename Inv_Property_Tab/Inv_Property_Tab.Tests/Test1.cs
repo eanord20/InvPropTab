@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Inv_Property_Tab.Configuration;
+using Inv_Property_Tab.Services;
 
 namespace Inv_Property_Tab.Tests;
 
@@ -346,6 +347,91 @@ public sealed class DocumentDisplayServiceTests
 
         Assert.AreEqual("6675.01.01.001.ipt", method.Invoke(null, new object[] { @"C:\\Parts\\6675.01.01.001.ipt", "ignored" }));
         Assert.AreEqual("Part1", method.Invoke(null, new object[] { string.Empty, "Part1" }));
+    }
+}
+
+[TestClass]
+public sealed class DrawingDocumentServiceTests
+{
+    private string _directory = null!;
+
+    [TestInitialize]
+    public void Initialize()
+    {
+        _directory = Path.Combine(Path.GetTempPath(), "InvPropTab.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_directory);
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        if (Directory.Exists(_directory))
+            Directory.Delete(_directory, true);
+    }
+
+    [TestMethod]
+    public void FindRelatedDrawingPrefersIdwOverDwg()
+    {
+        var modelPath = Path.Combine(_directory, "Part1.ipt");
+        var idwPath = Path.Combine(_directory, "Part1.idw");
+        var dwgPath = Path.Combine(_directory, "Part1.dwg");
+        File.WriteAllText(modelPath, string.Empty);
+        File.WriteAllText(idwPath, string.Empty);
+        File.WriteAllText(dwgPath, string.Empty);
+
+        var result = DrawingDocumentService.FindRelatedDrawing(modelPath);
+
+        Assert.AreEqual(idwPath, result);
+    }
+
+    [TestMethod]
+    public void FindRelatedDrawingReturnsNullWhenDrawingMissing()
+    {
+        var modelPath = Path.Combine(_directory, "Part1.ipt");
+        File.WriteAllText(modelPath, string.Empty);
+
+        var result = DrawingDocumentService.FindRelatedDrawing(modelPath);
+
+        Assert.IsNull(result);
+    }
+}
+
+[TestClass]
+public sealed class SupplierStoreSyncTests
+{
+    [TestMethod]
+    public void AddOrUpdateFromOneStoreIsVisibleInAnotherStore()
+    {
+        var fileName = "sync-" + Guid.NewGuid().ToString("N") + ".json";
+        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "InvPropTab", fileName);
+        try
+        {
+            var first = SupplierStore.ForFile(fileName);
+            var second = SupplierStore.ForFile(fileName);
+            first.AddOrUpdate("Bosch");
+
+            second.Load();
+
+            Assert.IsTrue(second.Suppliers.Any(v => string.Equals(v, "Bosch", StringComparison.OrdinalIgnoreCase)));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+}
+
+[TestClass]
+public sealed class OpenDrawingButtonTests
+{
+    [TestMethod]
+    public void PropBrowserControlHasOpenDrawingButtonField()
+    {
+        var type = typeof(Inv_Property_Tab.UI.PropUI.PropBrowserControl);
+        var field = type.GetField("_btnOpenDrawing", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.IsNotNull(field);
+        Assert.AreEqual("System.Windows.Forms.Button", field.FieldType.FullName);
     }
 }
 

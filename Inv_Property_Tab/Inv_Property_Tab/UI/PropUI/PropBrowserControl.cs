@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Inventor;
+using Inv_Property_Tab.Diagnostics;
 using Inv_Property_Tab.Services;
 using Inv_Property_Tab.UI.Fields;
 
@@ -15,12 +16,13 @@ namespace Inv_Property_Tab.UI.PropUI
 {
     public class PropBrowserControl : UserControl
     {
+        private static readonly AppLogger Logger = new AppLogger();
         private PropBrowserContext? _ctx;
 
-        private readonly SupplierStore _supplierStore = new SupplierStore("suppliers.json");
-        private readonly SupplierStore _projectStore = new SupplierStore("projects.json");
-        private readonly SupplierStore _designerStore = new SupplierStore("designers.json");
-        private readonly SupplierStore _categoryStore = new SupplierStore("categories.json");
+        private readonly SupplierStore _supplierStore = SupplierStore.Supplier;
+        private readonly SupplierStore _projectStore = SupplierStore.Project;
+        private readonly SupplierStore _designerStore = SupplierStore.Designer;
+        private readonly SupplierStore _categoryStore = SupplierStore.Category;
         private readonly IPropertiesService _propertiesService = new IPropertiesService();
         private readonly ConfigurableFieldsPanel _configurableFields = new ConfigurableFieldsPanel();
 
@@ -32,6 +34,7 @@ namespace Inv_Property_Tab.UI.PropUI
         private readonly WinTextBox _tbLocation = new WinTextBox();
         private readonly WinTextBox _tbFileName = new WinTextBox();
         private readonly Button _btnOpenLocation = new Button();
+        private readonly Button _btnOpenDrawing = new Button();
         private readonly WinTextBox _tbSize = new WinTextBox();
         private readonly WinTextBox _tbCreated = new WinTextBox();
         private readonly WinTextBox _tbSaved = new WinTextBox();
@@ -49,6 +52,7 @@ namespace Inv_Property_Tab.UI.PropUI
 
         private readonly ComboBox _cbSupplier = new ComboBox();
         private readonly Button _btnSuppliers = new Button();
+        private readonly Button _btnRefreshLists = new Button();
 
         private readonly WinTextBox _tbMass = new WinTextBox();
 
@@ -62,6 +66,7 @@ namespace Inv_Property_Tab.UI.PropUI
 
         private readonly Dictionary<Control, string> _originalValues = new Dictionary<Control, string>();
         private readonly Dictionary<Control, System.Drawing.Color> _originalBackColors = new Dictionary<Control, System.Drawing.Color>();
+        private readonly ToolTip _toolTip = new ToolTip();
 
         private bool _suppressEvents;
 
@@ -117,11 +122,8 @@ namespace Inv_Property_Tab.UI.PropUI
             _tbDims.Dock = DockStyle.Top;
 
             WireEvents();
-
-            _supplierStore.Load();
-            _projectStore.Load();
-            _designerStore.Load();
-            _categoryStore.Load();
+            _toolTip.SetToolTip(_btnOpenLocation, "Открыть расположение");
+            _toolTip.SetToolTip(_btnOpenDrawing, "Открыть чертёж");
             UpdateEmptyState();
         }
 
@@ -133,21 +135,18 @@ namespace Inv_Property_Tab.UI.PropUI
 
         public void ReloadFromDocument()
         {
+            _layout.SuspendLayout();
             try
             {
                 _suppressEvents = true;
                 ClearDirtyState();
-
-                _supplierStore.Load();
-                _projectStore.Load();
-                _designerStore.Load();
-                    _categoryStore.Load();
 
                 var doc = _ctx?.Document;
                 if (doc == null)
                 {
                     SetEnabledState(false);
                     ClearFields();
+                    _btnOpenDrawing.Enabled = false;
                     UpdateEmptyState();
                     return;
                 }
@@ -158,6 +157,7 @@ namespace Inv_Property_Tab.UI.PropUI
                 var fullFileName = TryGetFullFileName(doc);
                 _tbLocation.Text = string.IsNullOrWhiteSpace(fullFileName) ? string.Empty : System.IO.Path.GetDirectoryName(fullFileName) ?? string.Empty;
                 _tbFileName.Text = DocumentDisplayService.GetFileName(fullFileName, TryGetDisplayName(doc));
+                _btnOpenDrawing.Enabled = !string.IsNullOrWhiteSpace(fullFileName) && System.IO.File.Exists(fullFileName);
 
                 // Project iProperties
                 _tbPartNumber.Text = _propertiesService.TryGetPropertyValue(doc, "Part Number");
@@ -199,12 +199,14 @@ namespace Inv_Property_Tab.UI.PropUI
 
                 SnapshotOriginalValues();
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("PropBrowserControl.ReloadFromDocument", ex);
             }
             finally
             {
                 _suppressEvents = false;
+                _layout.ResumeLayout(true);
             }
         }
 
@@ -227,12 +229,20 @@ namespace Inv_Property_Tab.UI.PropUI
             _cbSupplier.SelectionChangeCommitted += (_, __) => MarkDirty(_cbSupplier);
 
             _btnSuppliers.Click += (_, __) => ManageSuppliers();
+            _btnRefreshLists.Click += (_, __) => RefreshHistoryLists();
             _btnDesigners.Click += (_, __) => ManageList("Разработчики", _designerStore);
             _btnProjects.Click += (_, __) => ManageList("Проекты", _projectStore);
             _btnCategories.Click += (_, __) => ManageList("Категории", _categoryStore);
             _btnSettings.Click += (_, __) => EditFieldSettings();
             _btnApply.Click += (_, __) => ApplyChanges();
             _btnOpenLocation.Click += (_, __) => OpenLocationInExplorer();
+            _btnOpenDrawing.Click += (_, __) => OpenRelatedDrawing();
+            _tbFileName.DoubleClick += (_, __) => OpenRelatedDrawing();
+
+            _cbDesigner.DropDown += (_, __) => { _designerStore.Reload(); LoadHistory(_designerStore, _cbDesigner); };
+            _cbProject.DropDown += (_, __) => { _projectStore.Reload(); LoadHistory(_projectStore, _cbProject); };
+            _cbCategory.DropDown += (_, __) => { _categoryStore.Reload(); LoadHistory(_categoryStore, _cbCategory); };
+            _cbSupplier.DropDown += (_, __) => { _supplierStore.Reload(); LoadSupplierList(); };
         }
 
         private void OpenLocationInExplorer()
@@ -255,6 +265,37 @@ namespace Inv_Property_Tab.UI.PropUI
             }
             catch
             {
+            }
+        }
+
+        private void OpenRelatedDrawing()
+        {
+            try
+            {
+                var doc = _ctx?.Document;
+                if (doc == null)
+                    return;
+
+                var modelPath = TryGetFullFileName(doc);
+                if (string.IsNullOrWhiteSpace(modelPath) || !System.IO.File.Exists(modelPath))
+                    return;
+
+                var drawingPath = DrawingDocumentService.FindRelatedDrawing(modelPath);
+                if (string.IsNullOrWhiteSpace(drawingPath))
+                {
+                    MessageBox.Show("Связанный чертёж не найден.", "InvPropTab", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (_ctx == null)
+                    return;
+
+                DrawingDocumentService.OpenDrawing(_ctx.App, drawingPath!);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Open related drawing", ex);
+                MessageBox.Show("Не удалось открыть чертёж." + System.Environment.NewLine + ex.Message, "InvPropTab", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -314,6 +355,7 @@ namespace Inv_Property_Tab.UI.PropUI
         {
             try
             {
+                store.Load();
                 using (var dlg = new SupplierManagerForm(title, store))
                 {
                     dlg.StartPosition = FormStartPosition.CenterParent;
@@ -360,7 +402,6 @@ namespace Inv_Property_Tab.UI.PropUI
                 if (!string.IsNullOrWhiteSpace(current) && current.Length <= 200)
                 {
                     store.AddOrUpdate(current);
-                    store.Save();
                 }
 
                 _propertiesService.TrySetPropertyValue(doc, propName, current);
@@ -379,23 +420,26 @@ namespace Inv_Property_Tab.UI.PropUI
                 if (!_originalValues.TryGetValue(_cbSupplier, out var original))
                     original = string.Empty;
                 var current = (_cbSupplier.Text ?? string.Empty).Trim();
-                if (string.Equals(original, current, StringComparison.Ordinal))
-                    return false;
-
-                // Don't pollute supplier history with formula expressions.
+                var historyUpdated = false;
+                // Keep history fresh even if iProperty value is considered unchanged.
                 if (!string.IsNullOrWhiteSpace(current) && !current.Contains("<") && !current.Contains(">") && !current.Contains("=") && current.Length <= 120)
                 {
+                    var beforeCount = _supplierStore.Suppliers.Count;
                     _supplierStore.AddOrUpdate(current);
-                    _supplierStore.Save();
+                    historyUpdated = _supplierStore.Suppliers.Count > beforeCount;
                 }
+
+                if (string.Equals(original, current, StringComparison.Ordinal))
+                    return historyUpdated;
 
                 var ok = _propertiesService.TrySetSupplierExpression(doc, current);
                 if (!ok)
                     ok = _propertiesService.TrySetSupplier(doc, current);
-                return ok;
+                return ok || historyUpdated;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("PropBrowserControl.TryApplySupplier", ex);
                 return false;
             }
         }
@@ -404,6 +448,7 @@ namespace Inv_Property_Tab.UI.PropUI
         {
             try
             {
+                _supplierStore.Load();
                 using (var dlg = new SupplierManagerForm("Поставщики", _supplierStore))
                 {
                     dlg.StartPosition = FormStartPosition.CenterParent;
@@ -413,8 +458,29 @@ namespace Inv_Property_Tab.UI.PropUI
                 _supplierStore.Save();
                 LoadSupplierList();
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("PropBrowserControl.ManageSuppliers", ex);
+            }
+        }
+
+        private void RefreshHistoryLists()
+        {
+            try
+            {
+                _supplierStore.Reload();
+                _designerStore.Reload();
+                _projectStore.Reload();
+                _categoryStore.Reload();
+
+                LoadSupplierList();
+                LoadHistory(_designerStore, _cbDesigner);
+                LoadHistory(_projectStore, _cbProject);
+                LoadHistory(_categoryStore, _cbCategory);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("PropBrowserControl.RefreshHistoryLists", ex);
             }
         }
 
@@ -423,6 +489,7 @@ namespace Inv_Property_Tab.UI.PropUI
             try
             {
                 var current = _cbSupplier.Text;
+                _supplierStore.Load();
                 _cbSupplier.BeginUpdate();
                 _cbSupplier.Items.Clear();
                 foreach (var s in _supplierStore.Suppliers)
@@ -431,8 +498,9 @@ namespace Inv_Property_Tab.UI.PropUI
                 if (!string.IsNullOrWhiteSpace(current))
                     _cbSupplier.Text = current;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("PropBrowserControl.LoadSupplierList", ex);
             }
         }
 
@@ -521,6 +589,7 @@ namespace Inv_Property_Tab.UI.PropUI
 
             _cbSupplier.Enabled = writable;
             _btnSuppliers.Enabled = true;
+            _btnRefreshLists.Enabled = true;
             _gridCustom.ReadOnly = true;
             _configurableFields.SetReadOnly(isReadOnly);
 
@@ -536,6 +605,7 @@ namespace Inv_Property_Tab.UI.PropUI
         {
             _tbLocation.Text = string.Empty;
             _tbFileName.Text = string.Empty;
+            _btnOpenDrawing.Enabled = false;
             _tbSize.Text = string.Empty;
             _tbCreated.Text = string.Empty;
             _tbSaved.Text = string.Empty;
@@ -640,9 +710,13 @@ namespace Inv_Property_Tab.UI.PropUI
         {
             _btnSuppliers.Text = "...";
             _btnSuppliers.Width = 32;
+            _btnRefreshLists.Text = "Обн";
+            _btnRefreshLists.Width = 40;
 
             _btnOpenLocation.Text = "📂";
             _btnOpenLocation.Width = 32;
+            _btnOpenDrawing.Text = "📄";
+            _btnOpenDrawing.Width = 32;
 
             _btnDesigners.Text = "...";
             _btnDesigners.Width = 32;
@@ -654,10 +728,13 @@ namespace Inv_Property_Tab.UI.PropUI
             var supplierPanel = new Panel { Dock = DockStyle.Top };
             _cbSupplier.Dock = DockStyle.Fill;
             supplierPanel.Controls.Add(_cbSupplier);
+            _btnRefreshLists.Dock = DockStyle.Right;
+            supplierPanel.Controls.Add(_btnRefreshLists);
             _btnSuppliers.Dock = DockStyle.Right;
             supplierPanel.Controls.Add(_btnSuppliers);
             supplierPanel.Height = _cbSupplier.PreferredHeight;
             _btnSuppliers.Height = _cbSupplier.PreferredHeight;
+            _btnRefreshLists.Height = _cbSupplier.PreferredHeight;
 
             var categoryPanel = BuildComboWithButton(_cbCategory, _btnCategories);
             var designerPanel = BuildComboWithButton(_cbDesigner, _btnDesigners);
@@ -679,7 +756,14 @@ namespace Inv_Property_Tab.UI.PropUI
             locationPanel.Height = _tbLocation.PreferredHeight;
             _btnOpenLocation.Height = _tbLocation.PreferredHeight;
             AddUnlabeledControl(locationPanel);
-            AddUnlabeledControl(_tbFileName);
+            var fileNamePanel = new Panel { Dock = DockStyle.Top };
+            _tbFileName.Dock = DockStyle.Fill;
+            fileNamePanel.Controls.Add(_tbFileName);
+            _btnOpenDrawing.Dock = DockStyle.Right;
+            fileNamePanel.Controls.Add(_btnOpenDrawing);
+            fileNamePanel.Height = _tbFileName.PreferredHeight;
+            _btnOpenDrawing.Height = _tbFileName.PreferredHeight;
+            AddUnlabeledControl(fileNamePanel);
 
             AddSeparator();
 
@@ -733,6 +817,8 @@ namespace Inv_Property_Tab.UI.PropUI
             _btnApply.Text = "Применить";
             _btnApply.Height = 32;
             _btnApply.Dock = DockStyle.Right;
+            _btnApply.Width = 180;
+            _btnApply.BackColor = ColorTranslator.FromHtml("#C8EFD4");
             _actionsRow.Controls.Add(_btnSettings, 0, 0);
             _actionsRow.Controls.Add(_btnApply, 1, 0);
         }
@@ -774,12 +860,12 @@ namespace Inv_Property_Tab.UI.PropUI
         {
             try
             {
-                _originalValues[_tbPartNumber] = _tbPartNumber.Text ?? string.Empty;
-                _originalValues[_tbDescription] = _tbDescription.Text ?? string.Empty;
-                _originalValues[_cbCategory] = _cbCategory.Text ?? string.Empty;
-                _originalValues[_cbDesigner] = _cbDesigner.Text ?? string.Empty;
-                _originalValues[_cbProject] = _cbProject.Text ?? string.Empty;
-                _originalValues[_cbSupplier] = _cbSupplier.Text ?? string.Empty;
+                SnapshotIfNotDirty(_tbPartNumber);
+                SnapshotIfNotDirty(_tbDescription);
+                SnapshotIfNotDirty(_cbCategory);
+                SnapshotIfNotDirty(_cbDesigner);
+                SnapshotIfNotDirty(_cbProject);
+                SnapshotIfNotDirty(_cbSupplier);
 
                 RememberOriginalBackColor(_tbPartNumber);
                 RememberOriginalBackColor(_tbDescription);
@@ -791,6 +877,12 @@ namespace Inv_Property_Tab.UI.PropUI
             catch
             {
             }
+        }
+
+        private void SnapshotIfNotDirty(Control c)
+        {
+            if (!_originalBackColors.TryGetValue(c, out var originalColor) || Equals(c.BackColor, originalColor))
+                _originalValues[c] = c.Text ?? string.Empty;
         }
 
         private static Panel BuildComboWithButton(ComboBox cb, Button btn)
@@ -810,6 +902,7 @@ namespace Inv_Property_Tab.UI.PropUI
             try
             {
                 var current = cb.Text;
+                store.Load();
                 cb.BeginUpdate();
                 cb.Items.Clear();
                 foreach (var s in store.Suppliers)
@@ -818,8 +911,9 @@ namespace Inv_Property_Tab.UI.PropUI
                 if (!string.IsNullOrWhiteSpace(current))
                     cb.Text = current;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Error("PropBrowserControl.LoadHistory", ex);
             }
         }
 
@@ -949,6 +1043,7 @@ namespace Inv_Property_Tab.UI.PropUI
             private readonly ListBox _list = new ListBox();
             private readonly WinTextBox _tb = new WinTextBox();
             private readonly Button _add = new Button();
+            private readonly Button _refresh = new Button();
             private readonly Button _rename = new Button();
             private readonly Button _delete = new Button();
             private readonly Button _close = new Button();
@@ -965,12 +1060,14 @@ namespace Inv_Property_Tab.UI.PropUI
                 _tb.Dock = DockStyle.Top;
 
                 _add.Text = "Добавить";
+                _refresh.Text = "Обновить";
                 _rename.Text = "Переименовать";
                 _delete.Text = "Удалить";
                 _close.Text = "Закрыть";
 
                 var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 40 };
                 buttons.Controls.Add(_add);
+                buttons.Controls.Add(_refresh);
                 buttons.Controls.Add(_rename);
                 buttons.Controls.Add(_delete);
                 buttons.Controls.Add(_close);
@@ -984,6 +1081,12 @@ namespace Inv_Property_Tab.UI.PropUI
                 _add.Click += (_, __) =>
                 {
                     _store.AddOrUpdate(_tb.Text);
+                    LoadItems();
+                };
+
+                _refresh.Click += (_, __) =>
+                {
+                    _store.Reload();
                     LoadItems();
                 };
 
