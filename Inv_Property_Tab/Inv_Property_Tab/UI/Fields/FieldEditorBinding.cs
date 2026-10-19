@@ -53,8 +53,7 @@ namespace Inv_Property_Tab.UI.Fields
 
         public bool RememberAppliedValue()
         {
-            if (string.Equals(Definition.Id, "description", StringComparison.OrdinalIgnoreCase) ||
-                Definition.Editor != FieldEditors.List || !Definition.RememberValues)
+            if (Definition.Editor != FieldEditors.List || !Definition.RememberValues)
                 return false;
             var value = Value.Trim();
             if (value.Length == 0 || Definition.Values.Any(item => string.Equals(item, value, StringComparison.OrdinalIgnoreCase)))

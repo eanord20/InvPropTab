@@ -230,7 +230,7 @@ public sealed class InventorPropertyCatalogTests
     [TestMethod]
     public void RemovedPropertiesDoNotReturnFromLegacyConfiguration()
     {
-        var removed = new[] { "checkingDate", "creationDate", "webLink", "subject", "itemQuantity", "baseQuantity", "componentType", "representation" };
+        var removed = new[] { "checkingDate", "creationDate", "webLink", "subject", "itemQuantity", "baseQuantity", "componentType", "representation", "structure", "stage", "counter", "volume", "fileName", "filePath" };
         Assert.IsFalse(InventorPropertyCatalog.All.Any(field => removed.Contains(field.Id)));
         var legacy = new FieldsConfiguration
         {
@@ -240,6 +240,15 @@ public sealed class InventorPropertyCatalogTests
         var merged = Inv_Property_Tab.UI.Settings.FieldSettingsMerger.Merge(InventorPropertyCatalog.All, legacy);
 
         Assert.IsFalse(merged.Fields.Any(field => removed.Contains(field.Id)));
+    }
+
+    [TestMethod]
+    public void CatalogContainsRevisionAndInventoryNumberLabel()
+    {
+        var revision = InventorPropertyCatalog.All.Single(field => field.Id == "revisionNumber");
+        Assert.AreEqual("Редакция", revision.Label);
+        Assert.AreEqual("Revision Number", revision.PropertyName);
+        Assert.AreEqual("Инвентарный номер", InventorPropertyCatalog.All.Single(field => field.Id == "stockNumber").Label);
     }
 
     [TestMethod]
@@ -258,6 +267,17 @@ public sealed class InventorPropertyCatalogTests
 [TestClass]
 public sealed class FieldSettingsMergerTests
 {
+    [TestMethod]
+    public void DescriptionCanEnableRememberMode()
+    {
+        var field = InventorPropertyCatalog.All.Single(item => item.Id == "description");
+
+        Inv_Property_Tab.UI.Settings.FieldSettingsMerger.ApplyRememberMode(field, true);
+
+        Assert.AreEqual(FieldEditors.List, field.Editor);
+        Assert.IsTrue(field.RememberValues);
+    }
+
     [TestMethod]
     public void HiddenTextFieldCanToggleRememberModeWithoutLosingValues()
     {
@@ -396,13 +416,13 @@ public sealed class FieldEditorFactoryTests
     }
 
     [TestMethod]
-    public void DescriptionValueIsNeverRemembered()
+    public void DescriptionValueIsRememberedWhenEnabled()
     {
         var definition = new FieldDefinition { Id = "description", Label = "Наименование", Editor = FieldEditors.List, RememberValues = true };
-        var results = InvokeRememberOnSta(definition, "Корпус");
+        var results = InvokeRememberOnSta(definition, "Корпус", "корпус");
 
-        CollectionAssert.AreEqual(new[] { false }, results);
-        Assert.IsEmpty(definition.Values);
+        CollectionAssert.AreEqual(new[] { true, false }, results);
+        CollectionAssert.AreEqual(new[] { "Корпус" }, definition.Values);
     }
 
     [TestMethod]

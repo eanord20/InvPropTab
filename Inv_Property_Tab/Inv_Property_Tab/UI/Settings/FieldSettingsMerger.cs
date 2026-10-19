@@ -9,7 +9,8 @@ namespace Inv_Property_Tab.UI.Settings
     {
         public static readonly IReadOnlyCollection<string> RemovedCatalogIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "checkingDate", "creationDate", "webLink", "subject", "itemQuantity", "baseQuantity", "componentType", "representation"
+            "checkingDate", "creationDate", "webLink", "subject", "itemQuantity", "baseQuantity", "componentType", "representation",
+            "structure", "stage", "counter", "volume", "fileName", "filePath"
         };
 
         public static FieldsConfiguration Merge(IReadOnlyList<FieldDefinition> catalog, FieldsConfiguration current)
@@ -49,7 +50,6 @@ namespace Inv_Property_Tab.UI.Settings
         public static bool CanRemember(FieldDefinition field)
         {
             return field != null &&
-                !field.Id.Equals("description", StringComparison.OrdinalIgnoreCase) &&
                 field.Source != FieldSources.System &&
                 field.Editor != FieldEditors.ReadOnly;
         }

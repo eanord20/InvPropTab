@@ -19,7 +19,8 @@ namespace Inv_Property_Tab.Configuration
             Standard("project", "Проект", "Project", 50, FieldEditors.List, true),
             Standard("supplier", "Поставщик", "Vendor", 60, FieldEditors.List, true),
             Standard("material", "Материал", "Material", 70, FieldEditors.List, true),
-            Standard("stockNumber", "Складской номер", "Stock Number", 80),
+            Standard("stockNumber", "Инвентарный номер", "Stock Number", 80),
+            Standard("revisionNumber", "Редакция", "Revision Number", 85),
             Standard("cost", "Сметная стоимость", "Cost", 90, FieldEditors.Number),
             Standard("status", "Статус", "Design Status", 100, FieldEditors.List, true),
             Standard("engineer", "Проверил", "Engineer", 110, FieldEditors.List, true),
@@ -29,13 +30,7 @@ namespace Inv_Property_Tab.Configuration
             Summary("comments", "Пояснения", "Comments", 180, FieldEditors.Multiline),
             DocumentSummary("organization", "Организация", "Company", 200),
             DocumentSummary("managerName", "Нормоконтроль", "Manager", 210, FieldEditors.List, true),
-            System("fileName", "Имя файла", 220),
-            System("filePath", "Путь файла", 230),
-            System("mass", "Масса", 240),
-            System("volume", "Объём", 250),
-            System("structure", "Структурная единица", 300),
-            System("counter", "Счётчик", 310),
-            Standard("stage", "Стадия", "User Status", 320, FieldEditors.List, true)
+            System("mass", "Масса", 240)
         };
 
         public static IReadOnlyList<FieldDefinition> All => Definitions.Select(Clone).ToList();
