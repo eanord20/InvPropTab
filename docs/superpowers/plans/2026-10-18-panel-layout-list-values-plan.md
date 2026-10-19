@@ -82,8 +82,10 @@ public void ListValuesAreTrimmedDeduplicatedAndSorted()
 - [ ] Добавить `ReplaceValues`, который заменяет `Definition.Values` и элементы ComboBox, не меняя текущее введённое значение.
 - [ ] В `FieldEditorFactory` для `list` создать горизонтальный host с ComboBox и кнопкой `…`; передать вызов редактирования через событие binding `EditValuesRequested`.
 - [ ] В `ConfigurableFieldsPanel` открыть диалог, после OK вызвать `ReplaceValues` и `_store.Save(_configuration)`.
-- [ ] В `FieldsSettingsForm` добавить кнопку «Значения…», включённую только для строки с `CanRemember`; после OK обновить `Definition.Values` строки.
-- [ ] Запустить тесты и вручную проверить отмену, добавление, изменение, удаление и очистку.
+- [ ] В `FieldsSettingsForm` разрешить «Запоминать» для любого несистемного и не-read-only свойства, кроме Description; видимость не влияет на доступность.
+- [ ] При включении запоминания менять `Editor` на `list`, при выключении возвращать заводской editor из `InventorPropertyCatalog`, не очищая `Values`.
+- [ ] Добавить кнопку «Значения…», включённую только при активном `RememberValues`; после OK обновить `Definition.Values` строки.
+- [ ] Запустить тесты и вручную проверить скрытое поле, переключение text/list, отмену, добавление, изменение, удаление и очистку.
 - [ ] Закоммитить: `git commit -m "feat: edit remembered list values"`.
 
 ### Task 3: Компактная компоновка панели
@@ -100,6 +102,7 @@ public void ListValuesAreTrimmedDeduplicatedAndSorted()
 - [ ] Запустить тесты и подтвердить FAIL на новой структуре host-полей.
 - [ ] Добавить путь и имя файла через `AddUnlabeledControl`, сохранив кнопку открытия папки.
 - [ ] Добавить `_configurableFields` напрямую в `_layout` без Label.
+- [ ] Добавить `_gridCustom` напрямую без заголовка «Прочее» и убрать лишний разделитель, чтобы между блоками оставался один стандартный отступ.
 - [ ] Построить физическую строку двухколоночным `TableLayoutPanel`: колонка 0 — label «Габариты» и `_tbDims`, колонка 1 — label «Масса» и `_tbMass`; ширина 50/50.
 - [ ] Исключить `mass` и `dimensions` из динамического рендера `ConfigurableFieldsPanel`, чтобы значения не дублировались.
 - [ ] Построить строку кнопок двухколоночным `TableLayoutPanel`: `_btnSettings` слева, `_btnApply` справа, одинаковая высота.
