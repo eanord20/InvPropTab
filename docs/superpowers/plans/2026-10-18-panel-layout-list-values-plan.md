@@ -109,7 +109,25 @@ public void ListValuesAreTrimmedDeduplicatedAndSorted()
 - [ ] Запустить тесты и Release build; ожидается PASS и 0 warnings.
 - [ ] Закоммитить: `git commit -m "feat: compact property panel layout"`.
 
-### Task 4: Регрессия и установщик
+### Task 4: Description и обновление каталога
+
+**Files:**
+- Modify: `Inv_Property_Tab/Inv_Property_Tab/Configuration/InventorPropertyCatalog.cs`
+- Modify: `Inv_Property_Tab/Inv_Property_Tab/UI/Settings/FieldSettingsMerger.cs`
+- Modify: `Inv_Property_Tab/Inv_Property_Tab/UI/Fields/FieldEditorBinding.cs`
+- Modify: `Inv_Property_Tab/Inv_Property_Tab/Configuration/FieldsConfigurationValidator.cs`
+- Test: `Inv_Property_Tab/Inv_Property_Tab.Tests/Test1.cs`
+
+- [ ] Написать failing tests: Description разрешает `ApplyRememberMode(true)` и `RememberAppliedValue`; каталог не содержит `structure`, `stage`, `counter`, `volume`, `fileName`, `filePath`; каталог содержит `revisionNumber` с `Revision Number`; `stockNumber.Label == "Инвентарный номер"`.
+- [ ] Запустить тесты и подтвердить FAIL на специальных запретах и старом каталоге.
+- [ ] Удалить специальные проверки `description` из merger, binding и validator.
+- [ ] Установить Description как `text` по умолчанию с разрешённым переключением в `list`.
+- [ ] Удалить шесть ID из каталога и `RemovedCatalogIds`, добавить `revisionNumber`, переименовать подпись `stockNumber`.
+- [ ] Проверить миграцию старого `fields.json`: удалённые ID отбрасываются, верхние `_tbLocation` и `_tbFileName` остаются в `PropBrowserControl`.
+- [ ] Запустить тесты и Release build; ожидается PASS и 0 warnings.
+- [ ] Закоммитить: `git commit -m "fix: revise remembered Description catalog"`.
+
+### Task 5: Регрессия и установщик
 
 **Files:**
 - Modify: `README.md`
