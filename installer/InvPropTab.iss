@@ -1,5 +1,5 @@
 #define AppName "InvPropTab"
-#define AppVersion "1.0.2"
+#define AppVersion "1.1.0"
 #define AppPublisher "Nikolay Sukhomlin"
 #define AppId "{{6F157B80-7E5D-4A0C-A2FD-C465741D2D82}"
 #define AddInClsid "{{A199A936-8AAA-4DDC-8BED-A41DB48D894C}"

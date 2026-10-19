@@ -9,13 +9,15 @@ namespace Inv_Property_Tab.UI.Settings
     {
         private readonly ListBox _list = new ListBox();
         private readonly TextBox _value = new TextBox();
+        private readonly Func<IReadOnlyList<string>>? _reloadValues;
 
-        public ListValuesEditorForm(string fieldLabel, IEnumerable<string> values)
+        public ListValuesEditorForm(string fieldLabel, IEnumerable<string> values, Func<IReadOnlyList<string>>? reloadValues = null)
         {
             Text = "Значения — " + fieldLabel;
             Width = 460;
             Height = 480;
             StartPosition = FormStartPosition.CenterParent;
+            _reloadValues = reloadValues;
             Values = ListValuesModel.Normalize(values);
             BuildLayout();
             ReloadList();
@@ -42,6 +44,7 @@ namespace Inv_Property_Tab.UI.Settings
             var actions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, Padding = new Padding(4), FlowDirection = FlowDirection.LeftToRight };
             actions.Controls.Add(CreateButton("Удалить", DeleteValue));
             actions.Controls.Add(CreateButton("Очистить", ClearValues));
+            actions.Controls.Add(CreateButton("Обновить", RefreshValues));
             actions.Controls.Add(CreateButton("Сохранить", SaveValues));
             actions.Controls.Add(CreateButton("Отмена", () => { DialogResult = DialogResult.Cancel; Close(); }));
             Controls.Add(actions);
@@ -80,6 +83,15 @@ namespace Inv_Property_Tab.UI.Settings
             Values = ListValuesModel.Normalize(Values);
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        private void RefreshValues()
+        {
+            if (_reloadValues == null)
+                return;
+            Values = ListValuesModel.Normalize(_reloadValues());
+            _value.Clear();
+            ReloadList();
         }
 
         private void NormalizeAndReload()

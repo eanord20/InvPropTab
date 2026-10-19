@@ -87,14 +87,27 @@ namespace Inv_Property_Tab.UI.Fields
         {
             if (binding.Definition.Editor != FieldEditors.List)
                 return false;
-            using (var form = new ListValuesEditorForm(binding.Definition.Label, binding.Definition.Values))
+            using (var form = new ListValuesEditorForm(binding.Definition.Label, binding.Definition.Values, () => LoadLatestValues(binding.Definition.Id)))
             {
                 if (form.ShowDialog(owner) != DialogResult.OK)
                     return false;
-                binding.ReplaceValues(form.Values);
-                _store.Save(_configuration);
+                var latest = _store.Load();
+                var target = latest.Fields.FirstOrDefault(field => string.Equals(field.Id, binding.Definition.Id, StringComparison.OrdinalIgnoreCase));
+                if (target == null)
+                    return false;
+                target.Values = ListValuesModel.Normalize(form.Values);
+                _store.Save(latest);
+                _configuration = latest;
+                binding.ReplaceValues(target.Values);
                 return true;
             }
+        }
+
+        private IReadOnlyList<string> LoadLatestValues(string fieldId)
+        {
+            var latest = _store.Load();
+            var target = latest.Fields.FirstOrDefault(field => string.Equals(field.Id, fieldId, StringComparison.OrdinalIgnoreCase));
+            return target?.Values ?? new List<string>();
         }
 
         public void SetReadOnly(bool readOnly)
